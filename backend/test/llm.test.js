@@ -105,3 +105,29 @@ test('POST /api/llm/classify-role classifies role via Gemini LLM', async () => {
   assert.ok(typeof data.role === 'string');
 });
 
+test('POST /api/llm/choose-channel selects channel via Gemini LLM', async () => {
+  const response = await fetch(`${baseUrl}/api/llm/choose-channel`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ designation: 'Backend Developer', existingChannels: ['backend-developers', 'general'] }),
+  });
+
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.success, true);
+  assert.ok(typeof data.channel === 'string');
+});
+
+test('POST /api/onboarding/check-activation triggers activation check', async () => {
+  const response = await fetch(`${baseUrl}/api/onboarding/check-activation`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.success, true);
+  assert.equal(data.message, 'Password activation check executed');
+});
+
+

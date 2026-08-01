@@ -3,3 +3,4 @@
 __pycache__/
 *.py[cod]
 service-account.json
+/backend/test
