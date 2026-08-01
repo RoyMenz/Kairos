@@ -127,7 +127,7 @@ test('POST /api/onboarding/check-activation triggers activation check', async ()
   assert.equal(response.status, 200);
   const data = await response.json();
   assert.equal(data.success, true);
-  assert.equal(data.message, 'Password activation check executed');
+  assert.ok(data.message.includes('Password activation check executed'));
 });
 
 

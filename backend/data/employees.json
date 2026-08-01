@@ -1,14 +1,1 @@
-[
-  {
-    "id": "a7746888-8b67-4d4e-b5d0-0007fe8d0095",
-    "employee_id": "KS001",
-    "name": "Alice Springs",
-    "email": "test_emp_1785605568641@company.com",
-    "role": "Cloud Architect",
-    "department": "Infrastructure",
-    "joining_date": "2026-08-15",
-    "initials": "AS",
-    "status": "Provisioning",
-    "created_at": "2026-08-01T17:32:48.794+00:00"
-  }
-]
+[]

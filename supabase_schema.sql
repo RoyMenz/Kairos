@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public.employees (
   joining_date TEXT,
   initials TEXT,
   status TEXT DEFAULT 'Provisioning',
+  completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

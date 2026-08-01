@@ -179,6 +179,31 @@ app.delete('/api/employees/:id', async (request, response, next) => {
   }
 });
 
+// Dashboard Statistics & Activity Endpoint
+app.get('/api/dashboard/stats', async (request, response, next) => {
+  try {
+    const stats = await employeeService.getDashboardStats();
+    return response.status(200).json({ success: true, ...stats });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/employees/:id/status', async (request, response, next) => {
+  try {
+    const { id } = request.params;
+    const { status } = request.body || {};
+    if (!status) {
+      return response.status(400).json({ error: 'Status is required' });
+    }
+    const updated = await employeeService.updateEmployeeStatus(id, status);
+    return response.status(200).json({ message: 'Employee status updated in DB', employee: updated });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 // LLM Endpoints
 
 app.post('/api/llm/classify-role', async (request, response, next) => {
@@ -248,9 +273,13 @@ app.post('/api/onboarding/external', async (request, response, next) => {
       return response.status(400).json({ error: 'workEmail and role are required' });
     }
     const result = await llmService.startExternalOnboarding(workEmail, role);
+
+    // Automatically update employee status in DB to Active & set completed_at timestamp
+    await employeeService.updateEmployeeStatus(workEmail, 'Active');
+
     return response
       .status(200)
-      .json({ message: 'External onboarding access initiated', ...result });
+      .json({ message: 'External onboarding access initiated & employee marked Active in DB', ...result });
   } catch (err) {
     next(err);
   }
@@ -268,13 +297,42 @@ app.get('/api/onboarding/pending', async (request, response, next) => {
 app.post('/api/onboarding/check-activation', async (request, response, next) => {
   try {
     const result = await llmService.checkActivation();
+
+    // Check pending records and auto-update DB status to Active for users with completed password change
+    try {
+      const pendingData = await llmService.getPendingOnboarding();
+      if (pendingData && pendingData.pending) {
+        for (const [email, record] of Object.entries(pendingData.pending)) {
+          if (!record.awaiting_password_change || record.external_invites_sent) {
+            await employeeService.updateEmployeeStatus(email, 'Active');
+          }
+        }
+      }
+    } catch (dbErr) {
+      console.warn('Status update notice:', dbErr.message);
+    }
+
     return response
       .status(200)
-      .json({ message: 'Password activation check executed', ...result });
+      .json({ message: 'Password activation check executed & completed statuses updated in DB', ...result });
   } catch (err) {
     next(err);
   }
 });
+
+app.post('/api/employees/:id/offboard', async (request, response, next) => {
+  try {
+    const { id } = request.params;
+    const updated = await employeeService.updateEmployeeStatus(id, 'Offboarded');
+    return response.status(200).json({
+      message: 'Offboarding sequence initiated & employee status updated to Offboarded in DB',
+      employee: updated,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 app.use((request, response) => {
   response.status(404).json({ error: 'Route not found' });

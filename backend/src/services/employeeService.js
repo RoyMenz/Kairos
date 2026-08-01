@@ -125,6 +125,75 @@ async function createEmployee({ name, email, role, joiningDate, department }) {
   return newEmployee;
 }
 
+async function updateEmployeeStatus(identifier, status) {
+  if (!identifier || !status) return null;
+  const completedAt = status.toLowerCase() === 'active' || status.toLowerCase() === 'completed' ? new Date().toISOString() : null;
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const updateData = { status };
+      if (completedAt) updateData.completed_at = completedAt;
+      await supabase
+        .from('employees')
+        .update(updateData)
+        .or(`employee_id.eq.${identifier},email.eq.${identifier}`);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  const local = loadLocalEmployees();
+  const index = local.findIndex(
+    (e) => e.employee_id === identifier || e.email === identifier
+  );
+  if (index !== -1) {
+    local[index].status = status;
+    if (completedAt) local[index].completed_at = completedAt;
+    saveLocalEmployees(local);
+    return local[index];
+  }
+  return null;
+}
+
+async function getDashboardStats() {
+  const employees = await getAllEmployees();
+
+  const totalEmployees = employees.length;
+  const activeOnboarding = employees.filter(
+    (e) => (e.status || '').toLowerCase() === 'provisioning'
+  ).length;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const completedToday = employees.filter((e) => {
+    const isCompleted = (e.status || '').toLowerCase() === 'active' || (e.status || '').toLowerCase() === 'completed';
+    const isToday = e.completed_at ? e.completed_at.startsWith(todayStr) : e.created_at && e.created_at.startsWith(todayStr);
+    return isCompleted && isToday;
+  }).length;
+
+  const failedTasks = 0;
+
+  return {
+    totalEmployees,
+    activeOnboarding,
+    completedToday,
+    failedTasks,
+    recentActivity: employees.slice(0, 10).map((emp) => {
+      const isProvisioning = (emp.status || '').toLowerCase() === 'provisioning';
+      const isCompleted = (emp.status || '').toLowerCase() === 'active' || (emp.status || '').toLowerCase() === 'completed';
+      return {
+        initials: emp.initials || 'EM',
+        name: emp.name,
+        email: emp.email,
+        department: emp.department || 'Engineering',
+        progress: isCompleted ? 100 : isProvisioning ? 65 : 40,
+        status: isCompleted ? 'Completed' : isProvisioning ? 'Provisioning Assets' : 'Pending',
+        error: false,
+      };
+    }),
+  };
+}
+
 async function deleteEmployee(identifier) {
   if (!identifier) return false;
 
@@ -151,6 +220,8 @@ async function deleteEmployee(identifier) {
 module.exports = {
   getAllEmployees,
   createEmployee,
+  updateEmployeeStatus,
+  getDashboardStats,
   deleteEmployee,
   generateNextEmployeeId,
 };
