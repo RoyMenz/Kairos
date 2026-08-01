@@ -1,86 +1,57 @@
 import { useEffect, useState } from 'react';
 
-const navItems = [
-  ['◉', 'Employees'], ['▦', 'Dashboard'], ['⌘', 'Workflows'],
-  ['▤', 'Applications'], ['☷', 'Logs'], ['⚙', 'Settings'],
+const menu = [['▦', 'Dashboard', '/dashboard'], ['◉', 'Employees', '/employees'], ['⌘', 'Workflows', '/workflows'], ['▤', 'Applications', '/applications'], ['☷', 'Logs', '/logs'], ['⚙', 'Settings', '/settings']];
+const metrics = [
+  { icon: '◉', label: 'Total Employees', value: '2,842', badge: '+12%' },
+  { icon: '↻', label: 'Active Onboarding', value: '48', badge: 'Active', tone: 'orange' },
+  { icon: '✓', label: 'Completed Today', value: '14', badge: '+4 Today' },
+  { icon: '!', label: 'Failed Tasks', value: '3', badge: 'Action Required', tone: 'red' },
 ];
+const activity = [
+  { initials: 'MB', name: 'Marcus Bennett', email: 'marcus.b@peopleflow.ai', department: 'Engineering', progress: 85, status: 'Provisioning Assets' },
+  { initials: 'LC', name: 'Lena Chen', email: 'l.chen@peopleflow.ai', department: 'Design', progress: 40, status: 'Access Blocked', error: true },
+  { initials: 'DR', name: 'David Ross', email: 'd.ross@peopleflow.ai', department: 'Sales', progress: 100, status: 'Completed' },
+];
+const chart = [['Mon', 42, 60], ['Tue', 64, 75], ['Wed', 86, 90], ['Thu', 35, 65], ['Fri', 60, 80], ['Sat', 12, 40], ['Sun', 7, 35]];
 
 function DashboardPage() {
-  const [employee, setEmployee] = useState({ name: '', email: '', department: '', role: '', manager: '', joiningDate: '' });
-  const [showSuccess, setShowSuccess] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => { document.title = 'Employee Onboarding | PeopleFlow'; }, []);
-
-  function updateField(event) {
-    setEmployee((current) => ({ ...current, [event.target.name]: event.target.value }));
-  }
-
-  function handleSubmit(event) {
-    event.preventDefault();
-    setShowSuccess(true);
-  }
+  const [range, setRange] = useState('Last 24 Hours');
+  useEffect(() => { document.title = 'Dashboard | PeopleFlow'; }, []);
 
   return (
-    <div className="dashboard-page">
+    <div className="dashboard-page overview-page">
       <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
       <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
-        <div className="sidebar-brand"><strong>PeopleFlow</strong><span>Enterprise HR</span></div>
-        <nav className="side-nav">
-          {navItems.map(([icon, label], index) => <a className={index === 0 ? 'active' : ''} href={`#${label.toLowerCase()}`} key={label}><span>{icon}</span>{label}</a>)}
-        </nav>
-        <div className="user-card">
-          <div className="avatar">MC</div>
-          <div><strong>Marcus Chen</strong><span>HR Manager</span></div>
-        </div>
+        <div className="sidebar-brand overview-brand"><i>ϟ</i><div><strong>PeopleFlow</strong><span>Enterprise HR</span></div></div>
+        <nav className="side-nav">{menu.map(([icon, label, href]) => <a className={label === 'Dashboard' ? 'active' : ''} href={href} key={label}><span>{icon}</span>{label}</a>)}</nav>
+        <div className="user-card"><div className="avatar">SJ</div><div><strong>Sarah Jenkins</strong><span>HR Manager</span></div></div>
       </aside>
 
-      <header className="topbar">
-        <div><strong>Onboarding Workspace</strong><nav><a href="#provisioning">Provisioning</a><a href="#assets">Assets</a><a href="#security">Security</a></nav></div>
-        <div className="top-actions"><button aria-label="Notifications">♢</button><span /><button>Help</button><button className="sign-out" onClick={() => { window.location.href = '/login'; }}>Sign out</button></div>
+      <header className="topbar overview-topbar">
+        <div className="workspace-search"><span>⌕</span><input placeholder="Search workspace..." /></div>
+        <nav><a className="active" href="#provisioning">Provisioning</a><a href="#assets">Assets</a><a href="#security">Security</a></nav>
+        <div className="overview-actions"><button className="notification" aria-label="Notifications">♢<i /></button><button className="add-employee" onClick={() => { window.location.href = '/employees/new'; }}>＋ Add Employee</button></div>
       </header>
 
-      <main className="dashboard-main">
-        <div className="page-heading">
-          <div><p>Employees <span>›</span> Add New Employee</p><h1>Create Employee Profile</h1></div>
-          <div className="stepper">
-            <div className="step active"><b>1</b><span>Details</span></div><i />
-            <div className="step"><b>2</b><span>Hardware</span></div><i />
-            <div className="step"><b>3</b><span>Review</span></div>
-          </div>
-        </div>
+      <main className="overview-main">
+        <section className="overview-heading"><div><h1>Provisioning Overview</h1><p>Real-time status of enterprise-wide employee lifecycle events.</p></div><div><select value={range} onChange={(event) => setRange(event.target.value)}><option>Last 24 Hours</option><option>Last 7 Days</option><option>Last 30 Days</option></select><button>☷ Filter</button></div></section>
 
-        <div className="dashboard-grid">
-          <div className="form-column">
-            <section className="employee-form-card">
-              <form onSubmit={handleSubmit}>
-                <div className="form-grid">
-                  <label>Full Name<input name="name" value={employee.name} onChange={updateField} placeholder="e.g. Sarah Jenkins" required /></label>
-                  <label>Work Email<input name="email" value={employee.email} onChange={updateField} placeholder="sarah.j@company.com" type="email" required /><small>ⓘ Domain verified for provisioning.</small></label>
-                  <label>Department<select name="department" value={employee.department} onChange={updateField} required><option value="" disabled>Select department</option><option>Engineering</option><option>Product Management</option><option>Sales &amp; Marketing</option><option>Customer Success</option><option>Design</option></select></label>
-                  <label>Role<input name="role" value={employee.role} onChange={updateField} placeholder="e.g. Senior Software Engineer" required /></label>
-                  <label>Direct Manager<input name="manager" value={employee.manager} onChange={updateField} placeholder="Search managers..." /></label>
-                  <label>Joining Date<input name="joiningDate" value={employee.joiningDate} onChange={updateField} type="date" required /></label>
-                </div>
-                <div className="form-actions">
-                  <button className="secondary-button" type="button">Save as Draft</button>
-                  <div><button className="text-button" type="reset">Cancel</button><button className="primary-button" type="submit">Generate AI Workflow <span>✦</span></button></div>
-                </div>
-              </form>
-            </section>
-            <aside className="ai-recommendation"><span>💡</span><div><strong>AI Provisioning Recommendation</strong><p>Based on the selected department, PeopleFlow will suggest appropriate hardware, application access, and team channels. Estimated setup time: <b>14 minutes</b>.</p></div></aside>
+        <section className="kpi-grid">{metrics.map((metric) => <article className={`kpi-card ${metric.tone ? `kpi-card--${metric.tone}` : ''}`} key={metric.label}><div><span className="kpi-icon">{metric.icon}</span><b>{metric.badge}</b></div><p>{metric.label}</p><strong>{metric.value}</strong></article>)}</section>
+
+        <div className="overview-grid">
+          <div className="overview-primary">
+            <section className="activity-card"><header><h2>Recent Onboarding Activity</h2><a href="/employees">View all</a></header><div className="table-scroll"><table><thead><tr><th>Employee</th><th>Department</th><th>Progress</th><th>Status</th><th /></tr></thead><tbody>{activity.map((person) => <tr key={person.email}><td><div className="activity-person"><span>{person.initials}</span><div><strong>{person.name}</strong><small>{person.email}</small></div></div></td><td>{person.department}</td><td><div className="mini-progress"><i style={{ width: `${person.progress}%` }} className={person.error ? 'error' : ''} /></div></td><td><b className={`activity-status ${person.error ? 'error' : person.progress === 100 ? 'complete' : ''}`}>{person.status}</b></td><td>⋮</td></tr>)}</tbody></table></div></section>
+
+            <section className="workflow-card"><header><h2>Workflow Efficiency</h2><div><span><i /> Provisioning</span><span><i /> Verification</span></div></header><div className="bar-chart">{chart.map(([day, inner, outer]) => <div className="bar-column" key={day}><div className="bar-outer" style={{ height: `${outer}%` }}><i style={{ height: `${inner}%` }} /></div><span>{day}</span></div>)}</div></section>
           </div>
 
-          <aside className="preview-card">
-            <p className="card-label">Profile Preview</p>
-            <div className="profile-preview"><div className="large-avatar">{employee.name ? employee.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase() : '＋'}</div><h2>{employee.name || 'New Hire'}</h2><p>{employee.role || 'Role not specified'}</p></div>
-            <div className="accuracy"><div><span>Data Accuracy</span><strong>High (92%)</strong></div><div className="progress"><span /></div></div>
-            <blockquote>“Streamlining onboarding through automated identity management.”</blockquote>
+          <aside className="overview-aside">
+            <section className="insights-card"><header><span>✦</span><h2>AI Insights</h2></header><article><strong>Bottleneck Detected</strong><p>Cloudflare Access provisioning for Engineering is taking 40% longer than average today.</p><footer><span>Impact: 12 employees</span><button>Investigate</button></footer></article><article className="health"><strong>Provisioning Health</strong><div><b>94.2%</b><span>Standard 99.8%</span></div><p>Verification errors in Finance are skewing global metrics.</p></article></section>
+            <section className="bottleneck-card"><h2>Top App Bottlenecks</h2>{[['⌘','GitHub Enterprise','2h 15m avg',85,'red'], ['☵','Slack Workspace','4m avg',10,'blue'], ['▤','NetSuite ERP','45m avg',50,'orange']].map(([icon, name, time, width, tone]) => <div className="app-stat" key={name}><span>{icon}</span><div><p><strong>{name}</strong><small>{time}</small></p><i><b className={tone} style={{ width: `${width}%` }} /></i></div></div>)}<button>Full Infrastructure Report</button></section>
           </aside>
         </div>
       </main>
-
-      {showSuccess && <div className="success-overlay" role="dialog" aria-modal="true"><div className="success-dialog"><div className="success-check">✓</div><h2>Workflow Generated</h2><p>The onboarding sequence for {employee.name || 'the new employee'} has been initiated. Hardware procurement and account provisioning are now in progress.</p><button onClick={() => setShowSuccess(false)}>Return to Dashboard</button></div></div>}
     </div>
   );
 }
