@@ -205,7 +205,7 @@ function WorkflowsPage() {
             Onboarding Workflows &amp; Access Completion
           </h1>
           <p style={{ margin: 0, color: '#64748b' }}>
-            Orchestrate identity provisioning across Google Workspace, Slack, GitHub, and Jira using live backend data.
+            Orchestrate identity provisioning across Zoho Workplace, Slack, GitHub, and Jira using live backend data.
           </p>
         </div>
         <button
@@ -408,7 +408,7 @@ function WorkflowsPage() {
         </div>
 
         <footer style={{ padding: '14px 20px', borderTop: '1px solid #e2e8f0', color: '#64748b', fontSize: '13px' }}>
-          <span>Active workflows monitored by Gemini AI &amp; Google Workspace Password Watcher</span>
+          <span>Active workflows monitored by Gemini AI &amp; Zoho Workplace Password Watcher</span>
         </footer>
       </section>
 

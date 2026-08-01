@@ -26,11 +26,10 @@ def resolve_file_path(path_str: str) -> str:
     return str(p.resolve())
 
 
-def load_settings() -> None:
-    """Load local settings without placing credentials in source code."""
-    if not ENV_FILE.exists():
+def _parse_env_file(file_path: Path) -> None:
+    if not file_path.exists():
         return
-    for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
+    for line in file_path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
             continue
@@ -41,6 +40,15 @@ def load_settings() -> None:
             if key.endswith("_FILE"):
                 value = resolve_file_path(value)
             os.environ[key] = value
+
+
+def load_settings() -> None:
+    """Load local settings without placing credentials in source code."""
+    root_env = PROJECT_DIR.parent / ".env"
+    llm_env = PROJECT_DIR / ".env"
+    _parse_env_file(root_env)
+    _parse_env_file(llm_env)
+
 
 
 def require_settings(*names: str) -> None:
