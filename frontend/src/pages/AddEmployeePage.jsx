@@ -36,13 +36,13 @@ function AddEmployeePage() {
       </aside>
 
       <header className="topbar">
-        <div><strong>Onboarding Workspace</strong><nav><a href="#provisioning">Provisioning</a></nav></div>
+        <div><strong>Create Employee Profile</strong></div>
         <div className="top-actions"><button aria-label="Notifications">♢</button><span /><button>Help</button><button className="sign-out" onClick={() => { window.location.href = '/login'; }}>Sign out</button></div>
       </header>
 
       <main className="dashboard-main">
         <div className="page-heading">
-          <div><p>Employees <span>›</span> Add New Employee</p><h1>Create Employee Profile</h1></div>
+          <div><p>Employees <span>›</span> Add New Employee</p></div>
           <div className="stepper">
             <div className="step active"><b>1</b><span>Details</span></div><i />
             <div className="step"><b>2</b><span>Hardware</span></div><i />
@@ -59,7 +59,7 @@ function AddEmployeePage() {
                   <label>Work Email<input name="email" value={employee.email} onChange={updateField} placeholder="sarah.j@company.com" type="email" required /><small>ⓘ Domain verified for provisioning.</small></label>
                   <label>Department<select name="department" value={employee.department} onChange={updateField} required><option value="" disabled>Select department</option><option>Engineering</option><option>Product Management</option><option>Sales &amp; Marketing</option><option>Customer Success</option><option>Design</option></select></label>
                   <label>Role<input name="role" value={employee.role} onChange={updateField} placeholder="e.g. Senior Software Engineer" required /></label>
-                  <label>Direct Manager<input name="manager" value={employee.manager} onChange={updateField} placeholder="Search managers..." /></label>
+                  <label>Direct Manager<input name="manager" value={employee.manager} onChange={updateField} placeholder="Manager name" /></label>
                   <label>Joining Date<input name="joiningDate" value={employee.joiningDate} onChange={updateField} type="date" required /></label>
                 </div>
                 <div className="form-actions">

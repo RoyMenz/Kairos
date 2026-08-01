@@ -29,7 +29,7 @@ function DashboardPage() {
       </aside>
 
       <header className="topbar overview-topbar">
-        <nav><a className="active" href="#provisioning">Provisioning</a></nav>
+        <strong>Provisioning Overview</strong>
         <div className="overview-actions">
           <button className="notification" aria-label="Notifications">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -42,7 +42,7 @@ function DashboardPage() {
       </header>
 
       <main className="overview-main">
-        <section className="overview-heading"><div><h1>Provisioning Overview</h1><p>Real-time status of enterprise-wide employee lifecycle events.</p></div><div><select value={range} onChange={(event) => setRange(event.target.value)}><option>Last 24 Hours</option><option>Last 7 Days</option><option>Last 30 Days</option></select><button>☷ Filter</button></div></section>
+        <section className="overview-heading"><div><p>Real-time status of enterprise-wide employee lifecycle events.</p></div><div><select value={range} onChange={(event) => setRange(event.target.value)}><option>Last 24 Hours</option><option>Last 7 Days</option><option>Last 30 Days</option></select><button>☷ Filter</button></div></section>
 
         <section className="kpi-grid">{metrics.map((metric) => <article className={`kpi-card ${metric.tone ? `kpi-card--${metric.tone}` : ''}`} key={metric.label}><div><span className="kpi-icon">{metric.icon}</span><b>{metric.badge}</b></div><p>{metric.label}</p><strong>{metric.value}</strong></article>)}</section>
 

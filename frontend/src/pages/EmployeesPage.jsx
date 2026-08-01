@@ -32,14 +32,13 @@ function EmployeesPage() {
       </aside>
 
       <header className="topbar">
-        <div><strong>Onboarding Workspace</strong><nav><a href="#provisioning">Provisioning</a></nav></div>
-        <div className="global-search"><span>⌕</span><input placeholder="Global search..." /></div>
+        <div><strong>Employees</strong></div>
       </header>
 
       <main className="employees-main">
         <section className="directory-heading">
-          <div><h1>Employees</h1><p>Manage identity provisioning and organizational structure.</p></div>
-          <div className="directory-actions"><div className="directory-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search directory..." /></div><button onClick={() => { window.location.href = '/employees/new'; }}><span>＋</span> Add Employee</button></div>
+          <div><p>Manage identity provisioning and organizational structure.</p></div>
+          <div className="directory-actions"><button onClick={() => { window.location.href = '/employees/new'; }}><span>＋</span> Add Employee</button></div>
         </section>
 
         <section className="employee-table-card">

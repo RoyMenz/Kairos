@@ -30,12 +30,12 @@ function WorkflowsPage() {
       </aside>
 
       <header className="topbar workflows-topbar">
-        <strong>Onboarding Workspace</strong><div className="workflow-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search workflows..." /></div>
-        <nav><a href="#provisioning">Provisioning</a></nav><button className="workflow-bell">♢</button><div className="avatar avatar--small">SJ</div>
+        <strong>Workflow Engine</strong>
+        <button className="workflow-bell">♢</button><div className="avatar avatar--small">SJ</div>
       </header>
 
       <main className="workflows-main">
-        <section className="workflows-heading"><div><h1>Workflow Engine</h1><p>Manage automated identity provisioning flows. Orchestrate access across 50+ enterprise applications.</p></div><button>＋ Create New Workflow</button></section>
+        <section className="workflows-heading"><div><p>Manage automated identity provisioning flows. Orchestrate access across 50+ enterprise applications.</p></div><button>＋ Create New Workflow</button></section>
 
         <section className="workflow-feature-grid">
           <article className="workflow-ai"><div className="feature-icon">✦</div><div><h2>AI Recommendation</h2><p>We detected a 14% increase in Engineering Contractor onboardings. Consider activating the <b>Auto-Provisioning Tier 2</b> workflow to reduce manual approvals by 30 hours this month.</p><footer><button>Apply Optimization</button><button>View Analysis</button></footer></div></article>
@@ -44,7 +44,7 @@ function WorkflowsPage() {
 
         <section className="workflows-table-card">
           <header><div>{['All Flows', 'Onboarding', 'Offboarding'].map((name) => <button className={filter === name ? 'active' : ''} onClick={() => setFilter(name)} key={name}>{name}</button>)}</div><button aria-label="More filters">☷</button></header>
-          <div className="table-scroll"><table><thead><tr><th>Workflow Name</th><th>Type</th><th>Status</th><th>Last Triggered</th><th /></tr></thead><tbody>{visibleFlows.map((flow) => <tr key={flow.name}><td><div className={`flow-name flow-name--${flow.type.toLowerCase()}`}><span>{flow.icon}</span><div><strong>{flow.name}</strong><small>{flow.apps}</small></div></div></td><td><b className={`flow-type flow-type--${flow.type.toLowerCase()}`}>{flow.type}</b></td><td><div className={`flow-status ${flow.status === 'Paused' ? 'paused' : ''}`}><i />{flow.status}</div></td><td><code>{flow.triggered}</code></td><td><button className="flow-more">⋮</button></td></tr>)}</tbody></table>{visibleFlows.length === 0 && <div className="empty-directory"><strong>No workflows found</strong><span>Try another search or flow type.</span></div>}</div>
+          <div className="table-scroll"><table><thead><tr><th>Workflow Name</th><th>Type</th><th>Status</th><th>Last Triggered</th><th /></tr></thead><tbody>{visibleFlows.map((flow) => <tr key={flow.name}><td><div className={`flow-name flow-name--${flow.type.toLowerCase()}`}><span>{flow.icon}</span><div><strong>{flow.name}</strong><small>{flow.apps}</small></div></div></td><td><b className={`flow-type flow-type--${flow.type.toLowerCase()}`}>{flow.type}</b></td><td><div className={`flow-status ${flow.status === 'Paused' ? 'paused' : ''}`}><i />{flow.status}</div></td><td><code>{flow.triggered}</code></td><td><button className="flow-more">⋮</button></td></tr>)}</tbody></table>{visibleFlows.length === 0 && <div className="empty-directory"><strong>No workflows found</strong><span>Try another flow type.</span></div>}</div>
           <footer><span>Showing {visibleFlows.length} of 28 workflows</span><div><button>‹</button><button className="active">1</button><button>2</button><button>›</button></div></footer>
         </section>
 
