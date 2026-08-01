@@ -56,9 +56,19 @@ def _ensure_jira_project_and_group(role: str) -> str:
         group.raise_for_status()
     roles = requests.get(f"{base}/rest/api/3/project/{policy['jira_key']}/role", headers=headers, auth=auth, timeout=20)
     roles.raise_for_status()
-    developer_url = roles.json().get("Developers")
+    developer_url = roles.json().get("Developers") or roles.json().get("Member")
     if not developer_url:
-        raise RuntimeError(f"Jira project {policy['jira_key']} has no Developers role.")
+        created_role = requests.post(
+            f"{base}/rest/api/3/role", headers=headers, auth=auth, timeout=20,
+            json={"name": "Developers", "description": "Kairos role-based developer access"},
+        )
+        if created_role.status_code not in {200, 201, 400}:
+            created_role.raise_for_status()
+        roles = requests.get(f"{base}/rest/api/3/project/{policy['jira_key']}/role", headers=headers, auth=auth, timeout=20)
+        roles.raise_for_status()
+        developer_url = roles.json().get("Developers") or roles.json().get("Member")
+    if not developer_url:
+        raise RuntimeError(f"Jira project {policy['jira_key']} has no Developers or Member role after setup.")
     assignment = requests.post(developer_url, headers=headers, auth=auth, timeout=20, json={"group": [group_name]})
     if assignment.status_code not in {200, 201, 400, 409}:
         assignment.raise_for_status()
@@ -101,16 +111,43 @@ def invite_to_github(work_email: str, role: str) -> None:
 
 
 def invite_to_jira(work_email: str, role: str) -> None:
-    require_settings("JIRA_ORG_ID", "JIRA_CLOUD_ID", "JIRA_ADMIN_TOKEN")
     group_name = _ensure_jira_project_and_group(role)
-    resource = f"ari:cloud:jira::site/{os.environ['JIRA_CLOUD_ID']}"
+    base = os.environ["JIRA_BASE_URL"].rstrip("/")
+    headers, auth = _jira_headers()
     response = requests.post(
-        f"https://api.atlassian.com/admin/v2/orgs/{os.environ['JIRA_ORG_ID']}/users/invite",
-        headers={"Authorization": f"Bearer {os.environ['JIRA_ADMIN_TOKEN']}", "Accept": "application/json"},
-        json={"emails": [work_email], "permissionRules": [{"resource": resource, "role": "atlassian/user"}], "additionalGroups": [group_name], "sendNotification": True, "notificationText": f"You have been invited to Nigmafest Jira as a {role} developer."}, timeout=20,
+        f"{base}/rest/api/3/user",
+        headers=headers,
+        auth=auth,
+        json={"emailAddress": work_email, "products": ["jira-software"]},
+        timeout=20,
     )
-    if response.status_code not in {200, 206, 409}:
-        response.raise_for_status()
+
+    print("\n========== ATLASSIAN RESPONSE ==========")
+    print("Status Code:", response.status_code)
+    print("Headers:", response.headers)
+    print("Body:")
+    print(response.text)
+    print("========================================\n")
+
+    if response.status_code not in (200, 201, 400):
+        raise Exception(
+            f"Jira User Invite Failed\n"
+            f"Status: {response.status_code}\n"
+            f"Response: {response.text}"
+        )
+    if response.status_code in (200, 201):
+        account_id = response.json().get("accountId")
+        if account_id:
+            membership = requests.post(
+                f"{base}/rest/api/3/group/user",
+                params={"groupname": group_name},
+                headers=headers,
+                auth=auth,
+                json={"accountId": account_id},
+                timeout=20,
+            )
+            if membership.status_code not in (200, 201, 400, 409):
+                membership.raise_for_status()
 
 
 def start_external_onboarding(work_email: str, role: str) -> None:

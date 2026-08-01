@@ -26,5 +26,39 @@
     "channel": "frontend-developers",
     "invite_sent": true,
     "created_at": "2026-08-01T14:00:26.885751+00:00"
+  },
+  "rishika@nigmafest.in": {
+    "email": "rishika@nigmafest.in",
+    "designation": "Python developer",
+    "role": "backend",
+    "channel": "backend-developers",
+    "invite_sent": true,
+    "created_at": "2026-08-01T14:13:52.040979+00:00"
+  },
+  "royina@nigmafest.in": {
+    "email": "royina@nigmafest.in",
+    "designation": "Python developer",
+    "role": "backend",
+    "channel": "backend-developers",
+    "invite_sent": true,
+    "created_at": "2026-08-01T14:21:22.123607+00:00"
+  },
+  "meow@nigmafest.in": {
+    "email": "meow@nigmafest.in",
+    "designation": "Python developer",
+    "role": "backend",
+    "channel": "backend-developers",
+    "invite_sent": true,
+    "created_at": "2026-08-01T14:38:48.534998+00:00"
+  },
+  "sheela@nigmafest.in": {
+    "email": "sheela@nigmafest.in",
+    "designation": "Python developer",
+    "role": "backend",
+    "channel": "backend-developers",
+    "invite_sent": true,
+    "created_at": "2026-08-01T14:58:38.976747+00:00",
+    "external_invites_sent": true,
+    "awaiting_password_change": false
   }
 }
