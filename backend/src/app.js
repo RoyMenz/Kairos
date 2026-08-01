@@ -2,8 +2,10 @@ const express = require('express');
 require('./env');
 const { getSupabaseClient } = require('./supabase');
 const llmService = require('./services/llmService');
+const employeeService = require('./services/employeeService');
 
 const app = express();
+
 
 app.disable('x-powered-by');
 app.use(express.json());
@@ -76,7 +78,52 @@ const handleLogin = async (request, response, next) => {
 app.post('/login', handleLogin);
 app.post('/api/login', handleLogin);
 
+// Employee Endpoints
+app.get('/api/employees', async (request, response, next) => {
+  try {
+    const employees = await employeeService.getAllEmployees();
+    return response.status(200).json({ success: true, employees });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/employees', async (request, response, next) => {
+  try {
+    const { name, email, role, joiningDate, department } = request.body || {};
+    if (!name || !email || !role) {
+      return response.status(400).json({ error: 'Name, work email, and role are required' });
+    }
+
+    const newEmployee = await employeeService.createEmployee({
+      name,
+      email,
+      role,
+      joiningDate,
+      department,
+    });
+
+    return response.status(201).json({
+      message: 'Employee added successfully',
+      employee: newEmployee,
+    });
+  } catch (err) {
+    return response.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/employees/:id', async (request, response, next) => {
+  try {
+    const { id } = request.params;
+    await employeeService.deleteEmployee(id);
+    return response.status(200).json({ message: 'Employee deleted successfully' });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // LLM Endpoints
+
 app.post('/api/llm/classify-role', async (request, response, next) => {
   try {
     const { designation } = request.body || {};

@@ -1,0 +1,35 @@
+[
+  {
+    "employee_id": "KS001",
+    "name": "Marcus Thorne",
+    "email": "m.thorne@peopleflow.ai",
+    "department": "Product Design",
+    "role": "Lead Designer",
+    "joining_date": "2026-01-15",
+    "initials": "MT",
+    "status": "Active",
+    "created_at": "2026-01-15T00:00:00.000Z"
+  },
+  {
+    "employee_id": "KS002",
+    "name": "Elena Rodriguez",
+    "email": "e.rodriguez@peopleflow.ai",
+    "department": "Engineering",
+    "role": "SRE Engineer",
+    "joining_date": "2026-02-01",
+    "initials": "ER",
+    "status": "Provisioning",
+    "created_at": "2026-02-01T00:00:00.000Z"
+  },
+  {
+    "employee_id": "KS003",
+    "name": "Jordan Smith",
+    "email": "j.smith@peopleflow.ai",
+    "department": "Marketing",
+    "role": "CMO",
+    "joining_date": "2026-03-10",
+    "initials": "JS",
+    "status": "Active",
+    "created_at": "2026-03-10T00:00:00.000Z"
+  }
+]
