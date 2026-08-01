@@ -4,56 +4,19 @@ const { getSupabaseClient } = require('../supabase');
 
 const LOCAL_STORE_PATH = path.resolve(__dirname, '../../data/employees.json');
 
-const INITIAL_EMPLOYEES = [
-  {
-    employee_id: 'KS001',
-    name: 'Marcus Thorne',
-    email: 'm.thorne@peopleflow.ai',
-    department: 'Product Design',
-    role: 'Lead Designer',
-    joining_date: '2026-01-15',
-    initials: 'MT',
-    status: 'Active',
-    created_at: '2026-01-15T00:00:00.000Z',
-  },
-  {
-    employee_id: 'KS002',
-    name: 'Elena Rodriguez',
-    email: 'e.rodriguez@peopleflow.ai',
-    department: 'Engineering',
-    role: 'SRE Engineer',
-    joining_date: '2026-02-01',
-    initials: 'ER',
-    status: 'Provisioning',
-    created_at: '2026-02-01T00:00:00.000Z',
-  },
-  {
-    employee_id: 'KS003',
-    name: 'Jordan Smith',
-    email: 'j.smith@peopleflow.ai',
-    department: 'Marketing',
-    role: 'CMO',
-    joining_date: '2026-03-10',
-    initials: 'JS',
-    status: 'Active',
-    created_at: '2026-03-10T00:00:00.000Z',
-  },
-];
-
 function loadLocalEmployees() {
   try {
     if (fs.existsSync(LOCAL_STORE_PATH)) {
       const content = fs.readFileSync(LOCAL_STORE_PATH, 'utf-8');
       const data = JSON.parse(content);
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         return data;
       }
     }
   } catch (err) {
     console.error('Error reading local employees store:', err.message);
   }
-  saveLocalEmployees(INITIAL_EMPLOYEES);
-  return INITIAL_EMPLOYEES;
+  return [];
 }
 
 function saveLocalEmployees(employees) {
@@ -91,7 +54,7 @@ async function getAllEmployees() {
         .from('employees')
         .select('*')
         .order('created_at', { ascending: false });
-      if (!error && Array.isArray(data) && data.length > 0) {
+      if (!error && Array.isArray(data)) {
         return data;
       }
     } catch (e) {
@@ -148,9 +111,11 @@ async function createEmployee({ name, email, role, joiningDate, department }) {
         local.unshift(data[0]);
         saveLocalEmployees(local);
         return data[0];
+      } else if (error) {
+        console.warn('Supabase insert warning/error:', error.message);
       }
     } catch (e) {
-      // Fallback to local
+      console.warn('Supabase exception:', e.message);
     }
   }
 
