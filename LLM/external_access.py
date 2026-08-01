@@ -3,6 +3,7 @@
 import os
 import time
 import hashlib
+import logging
 from requests.auth import HTTPBasicAuth
 
 import jwt
@@ -15,6 +16,21 @@ ROLE_RESOURCES = {
     "backend": {"github_team": "backend", "github_repo": "backend-repo", "jira_project": "Backend", "jira_key": "BACK"},
     "frontend": {"github_team": "frontend", "github_repo": "frontend-repo", "jira_project": "Frontend", "jira_key": "FRONT"},
 }
+
+# Job titles sent by onboarding are mapped to the standard roles in the
+# company-managed Kairos Jira project.  Unknown titles are developers by
+# default so that a new employee never receives administrator access by
+# accident.
+ROLE_MAPPING = {
+    "SQL Developer": "Developers",
+    "Backend Developer": "Developers",
+    "Frontend Developer": "Developers",
+    "Database Engineer": "Developers",
+    "Project Lead": "Administrators",
+    "Admin": "Administrators",
+}
+
+LOGGER = logging.getLogger(__name__)
 
 
 def role_resources(role: str) -> dict[str, str]:
@@ -36,7 +52,7 @@ def _jira_headers() -> tuple[dict[str, str], HTTPBasicAuth]:
     return ({"Accept": "application/json", "Content-Type": "application/json"}, HTTPBasicAuth(os.environ["JIRA_ADMIN_EMAIL"], os.environ["JIRA_API_TOKEN"]))
 
 
-def _ensure_jira_project_and_group(role: str) -> str:
+def _ensure_jira_project_and_group(role: str) -> tuple[str, str]:
     """Create the role project/group once and bind the group to Developers."""
     policy = role_resources(role)
     base = os.environ["JIRA_BASE_URL"].rstrip("/")
@@ -72,7 +88,7 @@ def _ensure_jira_project_and_group(role: str) -> str:
     assignment = requests.post(developer_url, headers=headers, auth=auth, timeout=20, json={"group": [group_name]})
     if assignment.status_code not in {200, 201, 400, 409}:
         assignment.raise_for_status()
-    return group_name
+    return group_name, developer_url
 
 
 def _github_headers() -> dict[str, str]:
@@ -111,7 +127,6 @@ def invite_to_github(work_email: str, role: str) -> None:
 
 
 def invite_to_jira(work_email: str, role: str) -> None:
-    group_name = _ensure_jira_project_and_group(role)
     base = os.environ["JIRA_BASE_URL"].rstrip("/")
     headers, auth = _jira_headers()
     response = requests.post(
@@ -135,21 +150,82 @@ def invite_to_jira(work_email: str, role: str) -> None:
             f"Status: {response.status_code}\n"
             f"Response: {response.text}"
         )
-    if response.status_code in (200, 201):
-        account_id = response.json().get("accountId")
-        if account_id:
-            membership = requests.post(
-                f"{base}/rest/api/3/group/user",
-                params={"groupname": group_name},
-                headers=headers,
-                auth=auth,
-                json={"accountId": account_id},
-                timeout=20,
-            )
-            if membership.status_code not in (200, 201, 400, 409):
-                membership.raise_for_status()
+
+
+def get_jira_account_id_by_email(work_email: str) -> str | None:
+    """Find a Jira account ID without relying on an email field being visible."""
+    base = os.environ["JIRA_BASE_URL"].rstrip("/")
+    headers, auth = _jira_headers()
+    users = requests.get(
+        f"{base}/rest/api/3/user/search",
+        params={"query": work_email},
+        headers=headers,
+        auth=auth,
+        timeout=20,
+    )
+    users.raise_for_status()
+    results = users.json()
+    account_id = next(
+        (user.get("accountId") for user in results if user.get("emailAddress", "").casefold() == work_email.casefold()),
+        None,
+    )
+    # Jira may suppress emailAddress according to the user's profile privacy.
+    # An exact email query that yields one user is still safe to use.
+    if not account_id and len(results) == 1:
+        account_id = results[0].get("accountId")
+    return account_id
+
+
+def assign_user_to_kairos_project(work_email: str, employee_role: str = "") -> bool:
+    """Add an invited Jira user to the appropriate role in the Kairos project."""
+    base = os.environ["JIRA_BASE_URL"].rstrip("/")
+    project_key = os.getenv("JIRA_PROJECT_KEY", "KJ")
+    headers, auth = _jira_headers()
+
+    project_role = ROLE_MAPPING.get(employee_role)
+    if project_role is None:
+        project_role = "Developers"
+        LOGGER.info(
+            "No Jira role mapping for %r; assigning %s to %s as the safe default.",
+            employee_role,
+            project_role,
+            project_key,
+        )
+
+    account_id = get_jira_account_id_by_email(work_email)
+    if not account_id:
+        LOGGER.warning(
+            "[WARNING] Jira account for %s is not ready for KJ project assignment yet. User needs to accept invite first.",
+            work_email,
+        )
+        return False
+
+    roles = requests.get(
+        f"{base}/rest/api/3/project/{project_key}/role",
+        headers=headers,
+        auth=auth,
+        timeout=20,
+    )
+    roles.raise_for_status()
+    role_url = roles.json().get(project_role)
+    if not role_url:
+        LOGGER.error("Jira project %s has no %s project role; %s was not assigned.", project_key, project_role, work_email)
+        return False
+
+    assignment = requests.post(
+        role_url,
+        headers=headers,
+        auth=auth,
+        json={"user": [account_id]},
+        timeout=20,
+    )
+    if assignment.status_code not in (200, 201, 400, 409):
+        assignment.raise_for_status()
+    LOGGER.info("Assigned %s to Jira project %s with the %s role.", work_email, project_key, project_role)
+    return True
 
 
 def start_external_onboarding(work_email: str, role: str) -> None:
     invite_to_github(work_email, role)
     invite_to_jira(work_email, role)
+    assign_user_to_kairos_project(work_email, role)
