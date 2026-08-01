@@ -9,6 +9,22 @@ body { margin: 0; min-width: 320px; min-height: 100vh; }
 button, input { font: inherit; }
 a { color: inherit; }
 
+.app-header-actions { display: flex; align-items: center; gap: 8px; }
+.theme-toggle { display: flex; min-height: 36px; align-items: center; gap: 7px; padding: 0 11px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-secondary); background: var(--color-surface-subtle); font-size: var(--font-size-md); font-weight: 700; cursor: pointer; }
+.theme-toggle:hover { color: var(--color-primary); background: var(--color-primary-soft); }
+.theme-toggle span:first-child { font-size: 17px; line-height: 1; }
+
+:root[data-theme='dark'] .topbar { background: rgba(17, 24, 39, .94); }
+:root[data-theme='dark'] .login-card { background: rgba(17, 24, 39, .97); box-shadow: 0 22px 55px rgba(0, 0, 0, .3); }
+:root[data-theme='dark'] .logs-heading h1,
+:root[data-theme='dark'] .applications-heading h1,
+:root[data-theme='dark'] .settings-heading h1 { color: var(--color-text) !important; }
+:root[data-theme='dark'] input,
+:root[data-theme='dark'] select,
+:root[data-theme='dark'] textarea { color-scheme: dark; }
+
+@media (max-width: 600px) { .theme-toggle span:last-child { display: none; }.theme-toggle { width: 36px; justify-content: center; padding: 0; } }
+
 .login-page {
   position: relative;
   display: grid;

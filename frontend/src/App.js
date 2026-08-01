@@ -1,4 +1,4 @@
-import { createElement, useEffect } from 'react';
+import { createElement, useEffect, useState } from 'react';
 import LoginPage from './pages/LoginPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import EmployeesPage from './pages/EmployeesPage.jsx';
@@ -44,6 +44,11 @@ const appBarTitles = {
 };
 
 function App() {
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('peopleflow-theme');
+    if (savedTheme === 'dark' || savedTheme === 'light') return savedTheme;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
   const pathname = window.location.pathname.replace(/\/$/, '') || '/';
   const Page = pages[pathname] || DashboardPage;
   const resolvedPath = pages[pathname] ? pathname : '/dashboard';
@@ -52,11 +57,22 @@ function App() {
     document.title = pageTitles[pathname] || 'PeopleFlow';
   }, [pathname]);
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    localStorage.setItem('peopleflow-theme', theme);
+  }, [theme]);
+
   if (pathname === '/' || pathname === '/login') return createElement(Page);
 
   return createElement(
     DashboardLayout,
-    { currentPath: resolvedPath, title: appBarTitles[resolvedPath] || 'Provisioning Overview' },
+    {
+      currentPath: resolvedPath,
+      title: appBarTitles[resolvedPath] || 'Provisioning Overview',
+      theme,
+      onToggleTheme: () => setTheme((current) => current === 'dark' ? 'light' : 'dark'),
+    },
     createElement(Page),
   );
 }
