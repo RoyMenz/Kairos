@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
 from config import require_settings, resolve_file_path
 
@@ -20,7 +21,12 @@ def password_was_changed(work_email: str, created_at: str) -> bool:
         scopes=[REPORTS_SCOPE, "https://www.googleapis.com/auth/admin.directory.user"],
     ).with_subject(os.environ["GOOGLE_ADMIN_EMAIL"])
     directory = build("admin", "directory_v1", credentials=credentials, cache_discovery=False)
-    user = directory.users().get(userKey=work_email, projection="basic").execute()
+    try:
+        user = directory.users().get(userKey=work_email, projection="basic").execute()
+    except HttpError as error:
+        if error.resp.status == 404:
+            return False
+        raise
     if not user.get("changePasswordAtNextLogin", False):
         return True
     reports = build("admin", "reports_v1", credentials=credentials, cache_discovery=False)

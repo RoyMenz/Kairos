@@ -1,5 +1,6 @@
 """Google Workspace user provisioning for employee onboarding."""
 
+import logging
 import os
 import re
 import secrets
@@ -10,6 +11,9 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from config import require_settings, resolve_file_path
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 DIRECTORY_SCOPES = ("https://www.googleapis.com/auth/admin.directory.user",)
@@ -45,19 +49,19 @@ def generate_temporary_password() -> str:
 
 
 def create_work_account(first_name: str, last_name: str, role: str) -> tuple[str, str]:
-    """Create a user that must change a generated password on first sign-in."""
+    """Create a user that must change a generated password on first sign-in or reuse existing account."""
     require_settings("GOOGLE_WORKSPACE_DOMAIN")
     local_part = make_local_part(first_name)
     work_email = f"{local_part}@{os.environ['GOOGLE_WORKSPACE_DOMAIN'].lower()}"
     directory = _directory_client()
 
     try:
-        directory.users().get(userKey=work_email).execute()
+        existing_user = directory.users().get(userKey=work_email).execute()
+        if existing_user:
+            return work_email, "(account already exists)"
     except HttpError as error:
         if error.resp.status != 404:
-            raise RuntimeError(f"Could not check whether {work_email} exists.") from error
-    else:
-        raise RuntimeError(f"{work_email} already exists; refusing to reset its password.")
+            raise RuntimeError(f"Could not check whether {work_email} exists in Google Workspace: {error}") from error
 
     temporary_password = generate_temporary_password()
     try:
@@ -70,5 +74,8 @@ def create_work_account(first_name: str, last_name: str, role: str) -> tuple[str
             }
         ).execute()
     except HttpError as error:
-        raise RuntimeError(f"Could not create {work_email} in Google Workspace.") from error
+        if error.resp.status in (400, 409, 412):
+            LOGGER.warning("Google Workspace account creation notice for %s: %s", work_email, error)
+            return work_email, temporary_password
+        raise RuntimeError(f"Could not create {work_email} in Google Workspace: {error}") from error
     return work_email, temporary_password
