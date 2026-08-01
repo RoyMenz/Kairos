@@ -24,7 +24,6 @@ function ApplicationsPage() {
 
       <main className="applications-main">
         <section className="applications-heading"><div><p>Manage identity provisioning and access control for your enterprise stack.</p></div><button>＋ Connect New App</button></section>
-        <aside className="applications-insight"><span>✦</span><div><strong>AI Provisioning Insight</strong><p>You have 12 pending seat requests for <b>Slack Enterprise</b> and 3 users needing re-authentication for <b>GitHub</b>. Automate these flows in your dashboard.</p></div><button>Review Actions</button></aside>
 
         <section className="applications-grid">{visibleApps.map((app) => <article className="application-card" key={app.name}><header><div className="app-logo" style={{ color: app.color }}>{app.mark}</div><span className={app.status === 'Connected' ? 'connected' : 'reauth'}><i />{app.status}</span></header><h2>{app.name}</h2><p>{app.description}</p><footer><div><small>Active Users</small><strong>{app.users}</strong></div>{app.status === 'Needs Re-auth' ? <button>Fix Connection</button> : <span className="app-arrow">›</span>}</footer></article>)}
           <button className="add-integration"><span>＋</span><strong>Add Integration</strong><p>Connect 500+ other enterprise apps instantly.</p></button>

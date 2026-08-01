@@ -54,7 +54,6 @@ function DashboardPage() {
           </div>
 
           <aside className="overview-aside">
-            <section className="insights-card"><header><span>✦</span><h2>AI Insights</h2></header><article><strong>Bottleneck Detected</strong><p>Cloudflare Access provisioning for Engineering is taking 40% longer than average today.</p><footer><span>Impact: 12 employees</span><button>Investigate</button></footer></article><article className="health"><strong>Provisioning Health</strong><div><b>94.2%</b><span>Standard 99.8%</span></div><p>Verification errors in Finance are skewing global metrics.</p></article></section>
             <section className="bottleneck-card"><h2>Top App Bottlenecks</h2>{[['⌘','GitHub Enterprise','2h 15m avg',85,'red'], ['☵','Slack Workspace','4m avg',10,'blue'], ['▤','NetSuite ERP','45m avg',50,'orange']].map(([icon, name, time, width, tone]) => <div className="app-stat" key={name}><span>{icon}</span><div><p><strong>{name}</strong><small>{time}</small></p><i><b className={tone} style={{ width: `${width}%` }} /></i></div></div>)}<button>Full Infrastructure Report</button></section>
           </aside>
         </div>

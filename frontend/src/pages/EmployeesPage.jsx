@@ -52,7 +52,6 @@ function EmployeesPage() {
           <div className="pagination"><p>Showing {filteredEmployees.length} of 1,284 employees</p><div><button disabled>‹</button><button className="current">1</button><button>2</button><button>3</button><span>…</span><button>›</button></div></div>
         </section>
 
-        <aside className="directory-insight"><span>✦</span><div><strong>AI Recommendation</strong><p>3 employees in Engineering have pending security clearances. Automate the next steps?</p></div><button>Review Suggestions</button></aside>
         <footer className="directory-footer">© 2026 PeopleFlow · Enterprise HR Design System</footer>
       </main>
     </div>

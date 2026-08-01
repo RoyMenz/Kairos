@@ -38,7 +38,6 @@ function WorkflowsPage() {
         <section className="workflows-heading"><div><p>Manage automated identity provisioning flows. Orchestrate access across 50+ enterprise applications.</p></div><button>＋ Create New Workflow</button></section>
 
         <section className="workflow-feature-grid">
-          <article className="workflow-ai"><div className="feature-icon">✦</div><div><h2>AI Recommendation</h2><p>We detected a 14% increase in Engineering Contractor onboardings. Consider activating the <b>Auto-Provisioning Tier 2</b> workflow to reduce manual approvals by 30 hours this month.</p><footer><button>Apply Optimization</button><button>View Analysis</button></footer></div></article>
           <article className="template-card"><div><span>Pro Templates</span><h2>Global Offboarding</h2><p>One-click deprovisioning for 12+ standard apps.</p></div><button>Browse Library</button></article>
         </section>
 

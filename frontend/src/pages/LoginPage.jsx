@@ -80,13 +80,6 @@ function LoginPage() {
             </button>
           </form>
 
-          <aside className="security-note">
-            <div className="security-icon"><Icon name="sparkle" size={18} /></div>
-            <div>
-              <h2>Secure HR access</h2>
-              <p>Unusual login activity automatically triggers multi-factor authentication to keep employee data protected.</p>
-            </div>
-          </aside>
         </section>
 
         <footer className="login-footer">

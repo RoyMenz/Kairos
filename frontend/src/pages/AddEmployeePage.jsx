@@ -6,7 +6,7 @@ const navItems = [
 ];
 
 function AddEmployeePage() {
-  const [employee, setEmployee] = useState({ name: '', email: '', department: '', role: '', manager: '', joiningDate: '' });
+  const [employee, setEmployee] = useState({ name: '', email: '', role: '', joiningDate: '' });
   const [showSuccess, setShowSuccess] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -57,9 +57,7 @@ function AddEmployeePage() {
                 <div className="form-grid">
                   <label>Full Name<input name="name" value={employee.name} onChange={updateField} placeholder="e.g. Sarah Jenkins" required /></label>
                   <label>Work Email<input name="email" value={employee.email} onChange={updateField} placeholder="sarah.j@company.com" type="email" required /><small>ⓘ Domain verified for provisioning.</small></label>
-                  <label>Department<select name="department" value={employee.department} onChange={updateField} required><option value="" disabled>Select department</option><option>Engineering</option><option>Product Management</option><option>Sales &amp; Marketing</option><option>Customer Success</option><option>Design</option></select></label>
                   <label>Role<input name="role" value={employee.role} onChange={updateField} placeholder="e.g. Senior Software Engineer" required /></label>
-                  <label>Direct Manager<input name="manager" value={employee.manager} onChange={updateField} placeholder="Manager name" /></label>
                   <label>Joining Date<input name="joiningDate" value={employee.joiningDate} onChange={updateField} type="date" required /></label>
                 </div>
                 <div className="form-actions">
@@ -68,7 +66,6 @@ function AddEmployeePage() {
                 </div>
               </form>
             </section>
-            <aside className="ai-recommendation"><span>💡</span><div><strong>AI Provisioning Recommendation</strong><p>Based on the selected department, PeopleFlow will suggest appropriate hardware, application access, and team channels. Estimated setup time: <b>14 minutes</b>.</p></div></aside>
           </div>
 
           <aside className="preview-card">
