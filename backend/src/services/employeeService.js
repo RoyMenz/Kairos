@@ -46,7 +46,41 @@ function generateNextEmployeeId(employees) {
   return `KS${String(nextNum).padStart(3, '0')}`;
 }
 
+function generateWorkEmail(name) {
+  const firstName = (name || '').trim().split(' ')[0] || 'user';
+  const cleaned = firstName.toLowerCase().replace(/[^a-z0-9._-]/g, '').replace(/^[._-]+/, '');
+  const domain = (process.env.ZOHO_WORKPLACE_DOMAIN || 'nigmafest.in').toLowerCase();
+  return `${cleaned || 'user'}@${domain}`;
+}
+
+function ensureBusinessEmail(emailStr, nameStr = '') {
+  const domain = (process.env.ZOHO_WORKPLACE_DOMAIN || 'nigmafest.in').toLowerCase();
+  if (!emailStr || typeof emailStr !== 'string') {
+    return `user@${domain}`;
+  }
+  const trimmed = emailStr.trim();
+  if (trimmed.toLowerCase().endsWith(`@${domain}`)) {
+    return trimmed;
+  }
+  if (nameStr) {
+    return generateWorkEmail(nameStr);
+  }
+  const localPart = trimmed.split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, '').replace(/^[._-]+/, '');
+  return `${localPart || 'user'}@${domain}`;
+}
+
+function formatEmployeeWithBusinessEmail(emp) {
+  if (!emp) return emp;
+  const businessEmail = ensureBusinessEmail(emp.email, emp.name);
+  return {
+    ...emp,
+    email: businessEmail,
+    personal_email: emp.personal_email || emp.email,
+  };
+}
+
 async function getAllEmployees() {
+  let list = [];
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
@@ -55,28 +89,38 @@ async function getAllEmployees() {
         .select('*')
         .order('created_at', { ascending: false });
       if (!error && Array.isArray(data)) {
-        return data;
+        list = data;
       }
     } catch (e) {
       // Fallback to local
     }
   }
-  return loadLocalEmployees();
+  if (!list || list.length === 0) {
+    list = loadLocalEmployees();
+  }
+  return list.map(formatEmployeeWithBusinessEmail);
 }
+
 
 async function createEmployee({ name, email, role, joiningDate, department }) {
   if (!name || !email || !role) {
     throw new Error('Name, email, and role are required');
   }
 
+  const personalEmail = email.trim();
+  const domain = (process.env.ZOHO_WORKPLACE_DOMAIN || 'nigmafest.in').toLowerCase();
+  const workEmail = personalEmail.toLowerCase().endsWith(`@${domain}`)
+    ? personalEmail
+    : generateWorkEmail(name);
+
   const existingEmployees = await getAllEmployees();
 
   const duplicate = existingEmployees.find(
-    (e) => (e.email || '').toLowerCase() === email.trim().toLowerCase()
+    (e) => (e.email || '').toLowerCase() === workEmail.toLowerCase() || (e.personal_email || '').toLowerCase() === personalEmail.toLowerCase()
   );
   if (duplicate) {
     throw new Error(
-      `An employee with email ${email} already exists (${duplicate.employee_id || duplicate.employeeId})`
+      `An employee with email ${workEmail} already exists (${duplicate.employee_id || duplicate.employeeId})`
     );
   }
 
@@ -93,7 +137,8 @@ async function createEmployee({ name, email, role, joiningDate, department }) {
   const newEmployee = {
     employee_id,
     name: name.trim(),
-    email: email.trim(),
+    email: workEmail,
+    personal_email: personalEmail,
     role: role.trim(),
     department: department ? department.trim() : 'Engineering',
     joining_date: joiningDate || new Date().toISOString().split('T')[0],
@@ -105,7 +150,8 @@ async function createEmployee({ name, email, role, joiningDate, department }) {
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('employees').insert([newEmployee]).select();
+      const { personal_email, ...supabasePayload } = newEmployee;
+      const { data, error } = await supabase.from('employees').insert([supabasePayload]).select();
       if (!error && data && data.length > 0) {
         const local = loadLocalEmployees();
         local.unshift(data[0]);
@@ -277,13 +323,140 @@ async function getApplicationStats() {
   };
 }
 
+async function getLogs() {
+  const logs = [];
+  const employees = await getAllEmployees();
+
+  for (const emp of employees) {
+    const initials = emp.initials || 'EM';
+    const createdTime = emp.created_at || new Date().toISOString();
+    const formattedCreatedTime = createdTime.replace('T', ' ').substring(0, 19);
+
+    logs.push({
+      id: `emp-created-${emp.employee_id || emp.email}`,
+      time: formattedCreatedTime,
+      rawTimestamp: new Date(createdTime).getTime() || Date.now(),
+      icon: '＋',
+      event: 'Zoho Account Provisioned',
+      user: emp.email,
+      initials,
+      admin: 'System (AI)',
+      status: 'Success',
+      action: 'View JSON',
+      app: 'Zoho Workplace',
+    });
+
+    if (emp.slack_channel || emp.classified_role) {
+      logs.push({
+        id: `slack-route-${emp.employee_id || emp.email}`,
+        time: formattedCreatedTime,
+        rawTimestamp: (new Date(createdTime).getTime() || Date.now()) + 1000,
+        icon: '⚡',
+        event: `Slack Channel Assigned (#${emp.slack_channel || 'backend-developers'})`,
+        user: emp.email,
+        initials,
+        admin: 'Gemini AI',
+        status: 'Success',
+        action: 'Details',
+        app: 'Slack Enterprise',
+      });
+    }
+
+    const statusLower = (emp.status || '').toLowerCase();
+    if (statusLower === 'active' || statusLower === 'completed') {
+      const completedTime = emp.completed_at || createdTime;
+      const formattedCompletedTime = completedTime.replace('T', ' ').substring(0, 19);
+
+      logs.push({
+        id: `external-access-${emp.employee_id || emp.email}`,
+        time: formattedCompletedTime,
+        rawTimestamp: (new Date(completedTime).getTime() || Date.now()) + 2000,
+        icon: '✓',
+        event: 'GitHub & Jira Access Dispatched',
+        user: emp.email,
+        initials,
+        admin: 'Password Watcher',
+        status: 'Success',
+        action: 'Logs',
+        app: 'GitHub Enterprise',
+      });
+    }
+  }
+
+  try {
+    const logPath = path.resolve(__dirname, '../../../LLM/onboarding.log');
+    if (fs.existsSync(logPath)) {
+      const content = fs.readFileSync(logPath, 'utf-8');
+      const lines = content.split('\n');
+      let logIndex = 0;
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const match = line.match(/^(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}),\d+\s+(INFO|WARNING|ERROR)\s+(.*)$/);
+        if (match) {
+          const timestampStr = match[1];
+          const logLevel = match[2];
+          const message = match[3];
+
+          let status = 'Success';
+          let icon = '⚙';
+          let app = 'System Flow';
+
+          if (logLevel === 'ERROR') {
+            status = 'Critical';
+            icon = '⊘';
+          } else if (logLevel === 'WARNING') {
+            status = 'Warning';
+            icon = '♢';
+          } else if (message.includes('password changed')) {
+            status = 'Success';
+            icon = '✓';
+            app = 'Zoho Workplace';
+          } else if (message.includes('Listening')) {
+            status = 'Success';
+            icon = '◉';
+            app = 'Slack Enterprise';
+          }
+
+          const emailMatch = message.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+          const rawEmail = emailMatch ? emailMatch[1] : '';
+          const userEmail = rawEmail ? ensureBusinessEmail(rawEmail) : 'System Process';
+          const initials = userEmail && userEmail !== 'System Process'
+            ? userEmail.substring(0, 2).toUpperCase()
+            : 'SYS';
+
+          logs.push({
+            id: `file-log-${logIndex++}`,
+            time: timestampStr,
+            rawTimestamp: new Date(timestampStr.replace(' ', 'T') + 'Z').getTime() || Date.now(),
+            icon,
+            event: message.length > 55 ? message.substring(0, 55) + '...' : message,
+            user: userEmail,
+            initials,
+            admin: logLevel === 'ERROR' ? 'System Error' : 'System Flow',
+            status,
+            action: 'Logs',
+            app,
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Notice reading onboarding log:', err.message);
+  }
+
+  const sortedLogs = logs.sort((a, b) => (b.rawTimestamp || 0) - (a.rawTimestamp || 0));
+  return sortedLogs.slice(0, 100);
+}
+
 module.exports = {
   getAllEmployees,
   createEmployee,
   updateEmployeeStatus,
   getDashboardStats,
   getApplicationStats,
+  getLogs,
   deleteEmployee,
   generateNextEmployeeId,
 };
+
 

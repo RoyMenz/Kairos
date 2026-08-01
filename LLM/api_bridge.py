@@ -46,7 +46,11 @@ def main():
             with contextlib.redirect_stdout(buf):
                 provision_workspace_account(personal_email, first_name, last_name, designation)
             output = buf.getvalue().strip()
-            print(json.dumps({"success": True, "output": output}))
+            from workspace_service import make_local_part
+            domain = os.environ.get("ZOHO_WORKPLACE_DOMAIN", "nigmafest.in").lower()
+            work_email = f"{make_local_part(first_name)}@{domain}"
+            print(json.dumps({"success": True, "work_email": work_email, "output": output}))
+
 
         elif action == "onboard":
             if len(sys.argv) < 4:

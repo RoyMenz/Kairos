@@ -13,11 +13,16 @@ import requests
 from config import require_settings
 
 
+import json
+import tempfile
+from pathlib import Path
+
 LOGGER = logging.getLogger(__name__)
 LOCAL_PART = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 _TOKEN_LOCK = threading.Lock()
 _ACCESS_TOKEN: str | None = None
 _ACCESS_TOKEN_EXPIRES_AT = 0.0
+_TOKEN_CACHE_FILE = Path(tempfile.gettempdir()) / "kairos_zoho_token_cache.json"
 
 
 def _mail_api_base() -> str:
@@ -25,15 +30,34 @@ def _mail_api_base() -> str:
 
 
 def _access_token() -> str:
-    """Exchange the long-lived Zoho refresh token for a Mail API access token."""
+    """Exchange the long-lived Zoho refresh token for a Mail API access token, caching to disk to avoid rate limits."""
     global _ACCESS_TOKEN, _ACCESS_TOKEN_EXPIRES_AT
-    if _ACCESS_TOKEN and time.monotonic() < _ACCESS_TOKEN_EXPIRES_AT:
+    now = time.time()
+    if _ACCESS_TOKEN and now < _ACCESS_TOKEN_EXPIRES_AT:
         return _ACCESS_TOKEN
+
+    if _TOKEN_CACHE_FILE.exists():
+        try:
+            cache = json.loads(_TOKEN_CACHE_FILE.read_text(encoding="utf-8"))
+            if cache.get("access_token") and now < cache.get("expires_at", 0):
+                _ACCESS_TOKEN = cache["access_token"]
+                _ACCESS_TOKEN_EXPIRES_AT = cache["expires_at"]
+                return _ACCESS_TOKEN
+        except Exception:
+            pass
+
     require_settings("ZOHO_CLIENT_ID", "ZOHO_CLIENT_SECRET", "ZOHO_REFRESH_TOKEN")
     with _TOKEN_LOCK:
-        # Another watcher operation may have refreshed it while this call waited.
-        if _ACCESS_TOKEN and time.monotonic() < _ACCESS_TOKEN_EXPIRES_AT:
-            return _ACCESS_TOKEN
+        if _TOKEN_CACHE_FILE.exists():
+            try:
+                cache = json.loads(_TOKEN_CACHE_FILE.read_text(encoding="utf-8"))
+                if cache.get("access_token") and time.time() < cache.get("expires_at", 0):
+                    _ACCESS_TOKEN = cache["access_token"]
+                    _ACCESS_TOKEN_EXPIRES_AT = cache["expires_at"]
+                    return _ACCESS_TOKEN
+            except Exception:
+                pass
+
         accounts_url = os.environ.get("ZOHO_ACCOUNTS_URL", "https://accounts.zoho.com").rstrip("/")
         response = requests.post(
             f"{accounts_url}/oauth/v2/token",
@@ -52,10 +76,17 @@ def _access_token() -> str:
         if not response.ok or not payload.get("access_token"):
             raise RuntimeError(f"Could not obtain a Zoho access token: {payload or response.text}")
         _ACCESS_TOKEN = payload["access_token"]
-        # Zoho access tokens normally last an hour; refresh one minute early.
-        lifetime = max(int(payload.get("expires_in", 3600)) - 60, 60)
-        _ACCESS_TOKEN_EXPIRES_AT = time.monotonic() + lifetime
+        lifetime = max(int(payload.get("expires_in", 3600)) - 120, 60)
+        _ACCESS_TOKEN_EXPIRES_AT = time.time() + lifetime
+        try:
+            _TOKEN_CACHE_FILE.write_text(
+                json.dumps({"access_token": _ACCESS_TOKEN, "expires_at": _ACCESS_TOKEN_EXPIRES_AT}),
+                encoding="utf-8",
+            )
+        except Exception:
+            pass
         return _ACCESS_TOKEN
+
 
 
 def _request(method: str, path: str, **kwargs) -> requests.Response:

@@ -110,16 +110,16 @@ function AddEmployeePage() {
                     />
                   </label>
                   <label>
-                    Work Email / Personal Email
+                    Personal Email (For activation invite)
                     <input
                       name="email"
                       value={employee.email}
                       onChange={updateField}
-                      placeholder="sarah.j@company.com"
+                      placeholder="e.g. sarah.jenkins@gmail.com"
                       type="email"
                       required
                     />
-                    <small>ⓘ Domain verified for provisioning.</small>
+                    <small>ⓘ Official company work email (@nigmafest.in) will be created automatically.</small>
                   </label>
                   <label>
                     Role / Job Designation
@@ -264,7 +264,7 @@ function AddEmployeePage() {
                 <li>✓ <strong>Database Record</strong> created in Supabase</li>
                 <li>✦ <strong>Gemini LLM</strong> mapped job function to role</li>
                 <li>✦ <strong>Slack Channel</strong> routed to <code>#{aiWorkflow?.suggestedChannel || createdEmployee?.slack_channel || 'backend-developers'}</code></li>
-                <li>✉ <strong>Workspace Account</strong> created &amp; password activation link sent</li>
+                <li>✉ <strong>New Work Account</strong> (<code>{createdEmployee?.email}</code>) created &amp; activation link sent</li>
               </ul>
             </div>
 

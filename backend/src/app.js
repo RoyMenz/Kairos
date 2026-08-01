@@ -199,6 +199,18 @@ app.get('/api/applications', async (request, response, next) => {
   }
 });
 
+// Logs & Monitoring Endpoint
+app.get('/api/logs', async (request, response, next) => {
+  try {
+    const logs = await employeeService.getLogs();
+    return response.status(200).json({ success: true, logs });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+
 
 app.post('/api/employees/:id/status', async (request, response, next) => {
   try {
@@ -307,7 +319,13 @@ app.get('/api/onboarding/pending', async (request, response, next) => {
 
 app.post('/api/onboarding/check-activation', async (request, response, next) => {
   try {
-    const result = await llmService.checkActivation();
+    let result = null;
+    try {
+      result = await llmService.checkActivation();
+    } catch (checkErr) {
+      console.warn('Activation check notice:', checkErr.message);
+      result = { notice: checkErr.message };
+    }
 
     // Check pending records and auto-update DB status to Active for users with completed password change
     try {
@@ -325,7 +343,7 @@ app.post('/api/onboarding/check-activation', async (request, response, next) => 
 
     return response
       .status(200)
-      .json({ message: 'Password activation check executed & completed statuses updated in DB', ...result });
+      .json({ message: 'Password activation check executed & completed statuses updated in DB', success: true, ...result });
   } catch (err) {
     next(err);
   }
