@@ -11,5 +11,12 @@
     "channel": "data-governance",
     "invite_sent": true,
     "created_at": "2026-07-23T07:20:04.257743+00:00"
+  },
+  "shettyrishith2005@gmail.com": {
+    "email": "shettyrishith2005@gmail.com",
+    "designation": "frontend-developer",
+    "channel": "frontend-developers",
+    "invite_sent": true,
+    "created_at": "2026-08-01T07:44:41.017611+00:00"
   }
 }

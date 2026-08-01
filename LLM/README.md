@@ -1,6 +1,9 @@
-# Simple Python LLM Setup
+# Kairos employee onboarding
 
-A minimal interactive chat program built with Python and the OpenAI Responses API.
+An employee-onboarding service for Google Workspace and Slack. Google Workspace
+provisioning creates a work account with a temporary password and requires a
+password change at first sign-in. Slack onboarding then assigns a channel based
+on the employee's designation.
 
 ## Setup
 
@@ -17,25 +20,29 @@ A minimal interactive chat program built with Python and the OpenAI Responses AP
    python -m pip install -r requirements.txt
    ```
 
-3. Copy the environment template and add your OpenAI API key:
+3. Configure the linked `.env` file with the required Slack, Gemini, Gmail, and
+   Google Workspace settings. Keep credentials and `service-account.json` private.
+
+4. Provision a work account:
 
    ```powershell
-   Copy-Item .env.example .env
+   python app.py provision-workspace PERSONAL_EMAIL FIRST_NAME LAST_NAME "DESIGNATION"
    ```
 
-   Edit `.env` and replace `your_api_key_here`. Keep this file private; it is
-   excluded from Git.
-
-4. Start chatting:
+   Example:
 
    ```powershell
-   python app.py
+   python app.py provision-workspace person@gmail.com Abc Smith "Backend developer"
    ```
 
-Type `exit` or `quit` to stop. Set `OPENAI_MODEL` in `.env` to use a different
-model.
+5. Run the Slack event listener:
+
+   ```powershell
+   python app.py listen
+   ```
 
 ## How it works
 
-Each prompt is sent through the Responses API. The preceding response ID is
-included on later turns so the model retains the conversation context.
+The LLM maps a designation to an approved role (`backend` or `frontend`) for
+later access assignment. The generated work address uses
+`firstname@nigmafest.in`. The service never logs the temporary password.

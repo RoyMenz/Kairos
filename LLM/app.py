@@ -8,10 +8,11 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 from config import load_settings, require_settings
-from email_service import send_workspace_invite
+from email_service import send_work_account_activation, send_workspace_invite
 from pending_store import load_pending, save_pending
-from role_router import choose_channel
+from role_router import choose_channel, choose_workspace_role
 from slack_service import add_user_to_channel, find_user_id, list_visible_channels
+from workspace_service import create_work_account
 
 
 def select_channel(slack: WebClient, designation: str) -> str:
@@ -47,6 +48,18 @@ def start_onboarding(email: str, designation: str) -> None:
     print(f"Workspace invitation emailed to {email}. They will be added to #{channel} after joining.")
 
 
+def provision_workspace_account(
+    personal_email: str, first_name: str, last_name: str, designation: str
+) -> None:
+    role = choose_workspace_role(designation)
+    work_email, temporary_password = create_work_account(first_name, last_name, role)
+    send_work_account_activation(personal_email, work_email, temporary_password)
+    print(
+        f"Classified {designation!r} as {role}. Created {work_email} and sent first-sign-in "
+        f"instructions to {personal_email}."
+    )
+
+
 def run_listener() -> None:
     require_settings("SLACK_BOT_TOKEN", "SLACK_APP_TOKEN")
     app = App(token=os.environ["SLACK_BOT_TOKEN"])
@@ -77,8 +90,13 @@ def main() -> None:
         run_listener()
     elif len(sys.argv) == 4 and sys.argv[1] == "onboard":
         start_onboarding(sys.argv[2], sys.argv[3])
+    elif len(sys.argv) == 6 and sys.argv[1] == "provision-workspace":
+        provision_workspace_account(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
     else:
-        raise SystemExit("Usage: python app.py listen | python app.py onboard EMAIL DESIGNATION")
+        raise SystemExit(
+            "Usage: python app.py listen | python app.py onboard EMAIL DESIGNATION | "
+            "python app.py provision-workspace PERSONAL_EMAIL FIRST_NAME LAST_NAME DESIGNATION"
+        )
 
 
 if __name__ == "__main__":
