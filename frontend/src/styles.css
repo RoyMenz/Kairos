@@ -252,3 +252,208 @@ a { color: inherit; }
   border-radius: 50%;
   background: var(--color-danger);
 }
+
+/* Employee profile actions and modal */
+.row-actions button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.row-actions .delete-action:hover {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.profile-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background: rgba(23, 32, 51, .48);
+  backdrop-filter: blur(5px);
+}
+
+.profile-modal {
+  width: min(100%, 520px);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  box-shadow: 0 28px 80px rgba(23, 32, 51, .24);
+  animation: dialog-in .25s ease-out;
+}
+
+.profile-modal > header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-7);
+  color: var(--color-surface);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+}
+
+.profile-modal-avatar {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  flex: none;
+  place-items: center;
+  border: 3px solid rgba(255, 255, 255, .35);
+  border-radius: 50%;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  font-size: var(--font-size-title-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.profile-modal header > div:nth-child(2) > span {
+  color: rgba(255, 255, 255, .76);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.profile-modal header h2 {
+  margin: var(--space-1) 0;
+  color: var(--color-surface);
+  font-size: var(--font-size-title-lg);
+}
+
+.profile-modal header p {
+  margin: 0;
+  color: rgba(255, 255, 255, .82);
+  font-size: var(--font-size-base);
+}
+
+.profile-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--color-surface);
+  background: rgba(255, 255, 255, .14);
+  font-size: var(--font-size-icon-lg);
+  cursor: pointer;
+}
+
+.profile-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-7);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+}
+
+.profile-status-row small {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.profile-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+  padding: var(--space-7);
+}
+
+.profile-details article {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.profile-details span,
+.profile-access span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.profile-details strong {
+  overflow: hidden;
+  color: var(--color-text-strong);
+  font-size: var(--font-size-base);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-access {
+  margin: 0 var(--space-7);
+  padding: var(--space-4);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+}
+
+.profile-access > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.profile-access strong {
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+}
+
+.profile-progress {
+  height: 5px;
+  margin-top: var(--space-3);
+  overflow: hidden;
+  border-radius: var(--radius-round);
+  background: var(--color-progress-track);
+}
+
+.profile-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+}
+
+.profile-modal > footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-5) var(--space-7) var(--space-7);
+}
+
+.profile-modal > footer button {
+  height: 38px;
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--color-surface);
+  background: var(--color-primary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .profile-modal > header,
+  .profile-details {
+    padding: var(--space-5);
+  }
+
+  .profile-details {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-access {
+    margin: 0 var(--space-5);
+  }
+}
