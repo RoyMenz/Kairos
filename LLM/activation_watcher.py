@@ -1,37 +1,20 @@
-"""Detect first password changes and release pending onboarding invitations."""
+"""Detect first Zoho Workplace sign-ins and release pending invitations."""
 
-import os
 from datetime import datetime, timezone
+import os
 
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-
-from config import require_settings, resolve_file_path
-
-
-REPORTS_SCOPE = "https://www.googleapis.com/auth/admin.reports.audit.readonly"
+from workspace_service import find_work_account
+from config import require_settings
 
 
 def password_was_changed(work_email: str, created_at: str) -> bool:
-    require_settings("GOOGLE_ADMIN_EMAIL", "GOOGLE_SERVICE_ACCOUNT_FILE")
-    sa_file = resolve_file_path(os.environ["GOOGLE_SERVICE_ACCOUNT_FILE"])
-    credentials = service_account.Credentials.from_service_account_file(
-        sa_file,
-        scopes=[REPORTS_SCOPE, "https://www.googleapis.com/auth/admin.directory.user"],
-    ).with_subject(os.environ["GOOGLE_ADMIN_EMAIL"])
-    directory = build("admin", "directory_v1", credentials=credentials, cache_discovery=False)
-    try:
-        user = directory.users().get(userKey=work_email, projection="basic").execute()
-    except HttpError as error:
-        if error.resp.status == 404:
-            return False
-        raise
-    if not user.get("changePasswordAtNextLogin", False):
-        return True
-    reports = build("admin", "reports_v1", credentials=credentials, cache_discovery=False)
-    start_time = datetime.fromisoformat(created_at).astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
-    result = reports.activities().list(
-        userKey=work_email, applicationName="login", eventName="password_edit", startTime=start_time
-    ).execute()
-    return bool(result.get("items"))
+    """A one-time Zoho password can only be cleared during the user's first sign-in."""
+    require_settings("ZOHO_ORGANIZATION_ID")
+    data = find_work_account(os.environ["ZOHO_ORGANIZATION_ID"], work_email)
+    if data is None:
+        return False
+    last_login = data.get("lastLogin", -1)
+    if not isinstance(last_login, (int, float)) or last_login < 0:
+        return False
+    created_timestamp = datetime.fromisoformat(created_at).astimezone(timezone.utc).timestamp() * 1000
+    return last_login >= created_timestamp

@@ -93,7 +93,7 @@ def provision_workspace_account(
 
 
 def release_password_changed_onboarding() -> None:
-    """Send all platform invitations once Google confirms the first password change."""
+    """Send all platform invitations once Zoho confirms the first sign-in."""
     pending = load_pending()
     for email, record in list(pending.items()):
         if not record.get("awaiting_password_change") or record.get("external_invites_sent"):

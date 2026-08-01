@@ -21,11 +21,11 @@
   },
   "rishi@nigmafest.in": {
     "email": "rishi@nigmafest.in",
-    "designation": "Java Developer",
+    "designation": "JAVA Developer",
     "role": "backend",
     "awaiting_password_change": true,
     "invite_sent": false,
-    "created_at": "2026-08-01T20:41:55.633004+00:00"
+    "created_at": "2026-08-01T18:42:51.910440+00:00"
   },
   "rishika@nigmafest.in": {
     "email": "rishika@nigmafest.in",
@@ -117,12 +117,11 @@
   },
   "rishith@nigmafest.in": {
     "email": "rishith@nigmafest.in",
-    "designation": "Java Developer",
-    "role": "backend",
-    "awaiting_password_change": false,
+    "designation": "Frontend Developer",
+    "role": "frontend",
+    "awaiting_password_change": true,
     "invite_sent": false,
-    "created_at": "2026-08-01T20:45:06.358659+00:00",
-    "external_invites_sent": true
+    "created_at": "2026-08-01T18:29:01.563444+00:00"
   },
   "priya@nigmafest.in": {
     "email": "priya@nigmafest.in",
@@ -139,5 +138,23 @@
     "awaiting_password_change": true,
     "invite_sent": false,
     "created_at": "2026-08-01T18:40:03.553349+00:00"
+  },
+  "test@nigmafest.in": {
+    "email": "test@nigmafest.in",
+    "designation": "Java Developer",
+    "role": "backend",
+    "awaiting_password_change": true,
+    "invite_sent": false,
+    "created_at": "2026-08-01T21:18:34.609153+00:00"
+  },
+  "zohotest@nigmafest.in": {
+    "email": "zohotest@nigmafest.in",
+    "designation": "Java Developer",
+    "role": "backend",
+    "channel": "backend-developers",
+    "invite_sent": true,
+    "created_at": "2026-08-01T21:46:18.348703+00:00",
+    "external_invites_sent": true,
+    "awaiting_password_change": false
   }
 }

@@ -1,32 +1,72 @@
-"""Google Workspace user provisioning for employee onboarding."""
+"""Zoho Workplace user provisioning for employee onboarding."""
 
 import logging
 import os
 import re
 import secrets
 import string
+import threading
+import time
 
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+import requests
 
-from config import require_settings, resolve_file_path
+from config import require_settings
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-DIRECTORY_SCOPES = ("https://www.googleapis.com/auth/admin.directory.user",)
 LOCAL_PART = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
+_TOKEN_LOCK = threading.Lock()
+_ACCESS_TOKEN: str | None = None
+_ACCESS_TOKEN_EXPIRES_AT = 0.0
 
 
-def _directory_client():
-    require_settings("GOOGLE_ADMIN_EMAIL", "GOOGLE_SERVICE_ACCOUNT_FILE")
-    sa_file = resolve_file_path(os.environ["GOOGLE_SERVICE_ACCOUNT_FILE"])
-    credentials = service_account.Credentials.from_service_account_file(
-        sa_file, scopes=DIRECTORY_SCOPES
-    ).with_subject(os.environ["GOOGLE_ADMIN_EMAIL"])
-    return build("admin", "directory_v1", credentials=credentials, cache_discovery=False)
+def _mail_api_base() -> str:
+    return os.environ.get("ZOHO_MAIL_API_BASE", "https://mail.zoho.com").rstrip("/")
+
+
+def _access_token() -> str:
+    """Exchange the long-lived Zoho refresh token for a Mail API access token."""
+    global _ACCESS_TOKEN, _ACCESS_TOKEN_EXPIRES_AT
+    if _ACCESS_TOKEN and time.monotonic() < _ACCESS_TOKEN_EXPIRES_AT:
+        return _ACCESS_TOKEN
+    require_settings("ZOHO_CLIENT_ID", "ZOHO_CLIENT_SECRET", "ZOHO_REFRESH_TOKEN")
+    with _TOKEN_LOCK:
+        # Another watcher operation may have refreshed it while this call waited.
+        if _ACCESS_TOKEN and time.monotonic() < _ACCESS_TOKEN_EXPIRES_AT:
+            return _ACCESS_TOKEN
+        accounts_url = os.environ.get("ZOHO_ACCOUNTS_URL", "https://accounts.zoho.com").rstrip("/")
+        response = requests.post(
+            f"{accounts_url}/oauth/v2/token",
+            data={
+                "refresh_token": os.environ["ZOHO_REFRESH_TOKEN"],
+                "client_id": os.environ["ZOHO_CLIENT_ID"],
+                "client_secret": os.environ["ZOHO_CLIENT_SECRET"],
+                "grant_type": "refresh_token",
+            },
+            timeout=20,
+        )
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = {}
+        if not response.ok or not payload.get("access_token"):
+            raise RuntimeError(f"Could not obtain a Zoho access token: {payload or response.text}")
+        _ACCESS_TOKEN = payload["access_token"]
+        # Zoho access tokens normally last an hour; refresh one minute early.
+        lifetime = max(int(payload.get("expires_in", 3600)) - 60, 60)
+        _ACCESS_TOKEN_EXPIRES_AT = time.monotonic() + lifetime
+        return _ACCESS_TOKEN
+
+
+def _request(method: str, path: str, **kwargs) -> requests.Response:
+    response = requests.request(
+        method,
+        f"{_mail_api_base()}{path}",
+        headers={"Authorization": f"Zoho-oauthtoken {_access_token()}", "Accept": "application/json"},
+        timeout=20,
+        **kwargs,
+    )
+    return response
 
 
 def make_local_part(first_name: str) -> str:
@@ -38,44 +78,63 @@ def make_local_part(first_name: str) -> str:
 
 
 def generate_temporary_password() -> str:
-    """Generate a high-entropy password accepted by common Workspace policies."""
+    """Generate a high-entropy password accepted by Zoho password policies."""
     alphabet = string.ascii_letters + string.digits + "!@#%_-"
     while True:
         password = "".join(secrets.choice(alphabet) for _ in range(24))
-        if any(char.islower() for char in password) and any(char.isupper() for char in password) and any(
-            char.isdigit() for char in password
-        ):
+        if any(c.islower() for c in password) and any(c.isupper() for c in password) and any(c.isdigit() for c in password):
             return password
 
 
-def create_work_account(first_name: str, last_name: str, role: str) -> tuple[str, str]:
-    """Create a user that must change a generated password on first sign-in or reuse existing account."""
-    require_settings("GOOGLE_WORKSPACE_DOMAIN")
-    local_part = make_local_part(first_name)
-    work_email = f"{local_part}@{os.environ['GOOGLE_WORKSPACE_DOMAIN'].lower()}"
-    directory = _directory_client()
+def find_work_account(organization_id: str, email: str) -> dict | None:
+    """Return an organization account by email, or None if it is not present.
 
-    try:
-        existing_user = directory.users().get(userKey=work_email).execute()
-        if existing_user:
-            return work_email, "(account already exists)"
-    except HttpError as error:
-        if error.resp.status != 404:
-            raise RuntimeError(f"Could not check whether {work_email} exists in Google Workspace: {error}") from error
+    Zoho's email-specific endpoint responds with a 400 for an unknown address,
+    so use the documented organization list endpoint for reliable lookups.
+    """
+    response = _request(
+        "GET", f"/api/organization/{organization_id}/accounts", params={"start": 0, "limit": 200}
+    )
+    if not response.ok:
+        raise RuntimeError(f"Could not fetch Zoho Workplace users: {response.text}")
+    target = email.lower()
+    for account in response.json().get("data", []):
+        if account.get("primaryEmailAddress", "").lower() == target:
+            return account
+    return None
+
+
+def _user_exists(organization_id: str, email: str) -> bool:
+    return find_work_account(organization_id, email) is not None
+
+
+def create_work_account(first_name: str, last_name: str, role: str) -> tuple[str, str]:
+    """Create a Zoho Workplace account requiring a password change at first login."""
+    require_settings("ZOHO_ORGANIZATION_ID", "ZOHO_WORKPLACE_DOMAIN")
+    local_part = make_local_part(first_name)
+    work_email = f"{local_part}@{os.environ['ZOHO_WORKPLACE_DOMAIN'].lower()}"
+    organization_id = os.environ["ZOHO_ORGANIZATION_ID"]
+    if _user_exists(organization_id, work_email):
+        raise RuntimeError(
+            f"{work_email} already exists in Zoho Workplace. "
+            "No activation email was sent because its temporary password is unknown."
+        )
 
     temporary_password = generate_temporary_password()
-    try:
-        directory.users().insert(
-            body={
-                "primaryEmail": work_email,
-                "name": {"givenName": first_name, "familyName": last_name},
-                "password": temporary_password,
-                "changePasswordAtNextLogin": True,
-            }
-        ).execute()
-    except HttpError as error:
-        if error.resp.status in (400, 409, 412):
-            LOGGER.warning("Google Workspace account creation notice for %s: %s", work_email, error)
-            return work_email, temporary_password
-        raise RuntimeError(f"Could not create {work_email} in Google Workspace: {error}") from error
+    response = _request(
+        "POST",
+        f"/api/organization/{organization_id}/accounts",
+        json={
+            "primaryEmailAddress": work_email,
+            "password": temporary_password,
+            "firstName": first_name,
+            "lastName": last_name,
+            "displayName": f"{first_name} {last_name}".strip(),
+            "role": "member",
+            "oneTimePassword": True,
+        },
+    )
+    if not response.ok:
+        raise RuntimeError(f"Could not create {work_email} in Zoho Workplace: {response.text}")
+    LOGGER.info("Created Zoho Workplace account %s with classified role %s", work_email, role)
     return work_email, temporary_password
