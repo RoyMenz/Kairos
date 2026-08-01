@@ -10,11 +10,35 @@ function DashboardPage() {
     recentActivity: [],
   });
   const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState([]);
+  const [logsLoading, setLogsLoading] = useState(true);
 
   useEffect(() => {
     document.title = 'Dashboard | PeopleFlow';
     fetchDashboardStats();
+    fetchRecentLogs();
   }, []);
+
+  async function fetchRecentLogs() {
+    setLogsLoading(true);
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      let response;
+      try {
+        response = await fetch('/api/logs');
+      } catch (e) {
+        response = await fetch(`${backendUrl}/api/logs`);
+      }
+      const data = await response.json();
+      if (response.ok && data.success && Array.isArray(data.logs)) {
+        setLogs(data.logs.slice(0, 5));
+      }
+    } catch (err) {
+      console.error('Failed to load recent dashboard logs:', err);
+    } finally {
+      setLogsLoading(false);
+    }
+  }
 
   async function fetchDashboardStats() {
     setLoading(true);
@@ -50,16 +74,6 @@ function DashboardPage() {
     { icon: '!', label: 'Failed Tasks', value: stats.failedTasks, badge: 'All Operational', tone: 'red' },
   ];
 
-  const chart = [
-    ['Mon', 42, 60],
-    ['Tue', 64, 75],
-    ['Wed', 86, 90],
-    ['Thu', 35, 65],
-    ['Fri', 60, 80],
-    ['Sat', 12, 40],
-    ['Sun', 7, 35],
-  ];
-
   return (
     <>
       <main className="overview-main overview-page">
@@ -73,9 +87,6 @@ function DashboardPage() {
               <option>Last 7 Days</option>
               <option>Last 30 Days</option>
             </select>
-            <button onClick={fetchDashboardStats} title="Refresh live statistics">
-              ↻ Refresh DB
-            </button>
           </div>
         </section>
 
@@ -95,7 +106,7 @@ function DashboardPage() {
           ))}
         </section>
 
-        <div className="overview-grid">
+        <div className="overview-grid overview-grid--single">
           <div className="overview-primary">
             <section className="activity-card">
               <header>
@@ -168,58 +179,43 @@ function DashboardPage() {
               </div>
             </section>
 
-            <section className="workflow-card">
+            <section className="dashboard-logs-card">
               <header>
-                <h2>Workflow Efficiency</h2>
                 <div>
-                  <span>
-                    <i /> Provisioning
-                  </span>
-                  <span>
-                    <i /> Verification
-                  </span>
+                  <h2>Recent Logs</h2>
+                  <p>Latest system and provisioning events</p>
                 </div>
+                <a href="/logs">View all logs</a>
               </header>
-              <div className="bar-chart">
-                {chart.map(([day, inner, outer]) => (
-                  <div className="bar-column" key={day}>
-                    <div className="bar-outer" style={{ height: `${outer}%` }}>
-                      <i style={{ height: `${inner}%` }} />
-                    </div>
-                    <span>{day}</span>
-                  </div>
-                ))}
+
+              <div className="dashboard-log-list">
+                {logs.map((item) => {
+                  const status = (item.status || 'Success').toLowerCase();
+                  return (
+                    <article key={item.id}>
+                      <span className={`dashboard-log-icon dashboard-log-icon--${status}`}>
+                        {item.icon || '•'}
+                      </span>
+                      <div>
+                        <strong>{item.event}</strong>
+                        <small>{item.user} · {item.admin}</small>
+                      </div>
+                      <div className="dashboard-log-meta">
+                        <code>{item.time}</code>
+                        <b className={`log-status log-status--${status}`}>{item.status}</b>
+                      </div>
+                    </article>
+                  );
+                })}
+
+                {logsLoading && <p className="dashboard-logs-message">Loading recent logs...</p>}
+                {!logsLoading && logs.length === 0 && (
+                  <p className="dashboard-logs-message">No system logs available yet.</p>
+                )}
               </div>
             </section>
-          </div>
 
-          <aside className="overview-aside">
-            <section className="bottleneck-card">
-              <h2>Top App Provisioning Metrics</h2>
-              {[
-                ['⌘', 'GitHub Enterprise', 'Access Provisioned', 100, 'blue'],
-                ['☵', 'Slack Workspace', 'Invite Emailed', 90, 'blue'],
-                ['☁', 'Google Workspace', 'Account Active', 100, 'blue'],
-                ['▤', 'Jira Software', 'Role Assigned', 85, 'blue'],
-              ].map(([icon, name, statusText, width, tone]) => (
-                <div className="app-stat" key={name}>
-                  <span>{icon}</span>
-                  <div>
-                    <p>
-                      <strong>{name}</strong>
-                      <small>{statusText}</small>
-                    </p>
-                    <i>
-                      <b className={tone} style={{ width: `${width}%` }} />
-                    </i>
-                  </div>
-                </div>
-              ))}
-              <button onClick={() => { window.location.href = '/workflows'; }}>
-                View Full Workflows Report
-              </button>
-            </section>
-          </aside>
+          </div>
         </div>
       </main>
     </>
