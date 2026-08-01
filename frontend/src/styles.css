@@ -457,3 +457,346 @@ a { color: inherit; }
     margin: 0 var(--space-5);
   }
 }
+
+/* Keep scrolling functional while hiding native scrollbar chrome. */
+html,
+body,
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Logs typography aligned with the application-wide type scale. */
+.logs-page .logs-heading p,
+.logs-page .logs-insight p,
+.logs-page .logs-filters label,
+.logs-page .logs-filters select,
+.logs-page .logs-filters input {
+  font-size: var(--type-label);
+}
+
+.logs-page .logs-filters h2,
+.logs-page .logs-filters h3,
+.logs-page .logs-table-card th,
+.logs-page .logs-table-card code,
+.logs-page .logs-table-card td:last-child button,
+.logs-page .logs-table-card > footer,
+.logs-page .logs-timeline code,
+.logs-page .logs-timeline p {
+  font-size: var(--type-label);
+}
+
+.logs-page .logs-table-card td,
+.logs-page .event-name strong,
+.logs-page .log-user,
+.logs-page .logs-timeline h3 {
+  font-size: var(--type-body);
+}
+
+.logs-page .log-status {
+  font-size: var(--type-caption);
+}
+
+/* Shared notification dropdown */
+.notification-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.topbar > .notification-control {
+  margin-left: auto;
+}
+
+.topbar .notification-control .notification-button {
+  position: relative;
+  display: grid;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--color-text-secondary);
+  background: transparent;
+  cursor: pointer;
+}
+
+.notification-dialog {
+  position: absolute;
+  top: calc(100% + var(--space-3));
+  right: 0;
+  width: min(360px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: 0 18px 48px rgba(23, 32, 51, .18);
+  animation: dialog-in .18s ease-out;
+}
+
+.notification-dialog > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.notification-dialog header h2 {
+  margin: 0;
+  font-size: var(--font-size-title-sm);
+}
+
+.notification-dialog header span {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.notification-dialog header button,
+.notification-dialog footer button {
+  border: 0;
+  color: var(--color-primary);
+  background: transparent;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.notification-list article {
+  position: relative;
+  display: grid;
+  grid-template-columns: 8px 1fr;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.notification-list article.unread {
+  background: var(--color-primary-soft);
+}
+
+.notification-list article > i {
+  width: 7px;
+  height: 7px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--color-border-strong);
+}
+
+.notification-list article.unread > i {
+  background: var(--color-primary);
+}
+
+.notification-list strong {
+  color: var(--color-text-strong);
+  font-size: var(--font-size-base);
+}
+
+.notification-list p {
+  margin: var(--space-1) 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-body);
+}
+
+.notification-list time {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.notification-dialog > footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-muted);
+}
+
+@media (max-width: 480px) {
+  .notification-dialog {
+    position: fixed;
+    top: 66px;
+    right: var(--space-3);
+    left: var(--space-3);
+    width: auto;
+  }
+}
+
+/* Shared responsive and visual refinement */
+.dashboard-page {
+  color: var(--color-text);
+  font-weight: var(--font-weight-regular);
+}
+
+.dashboard-page p,
+.dashboard-page td,
+.dashboard-page label,
+.dashboard-page input,
+.dashboard-page select,
+.dashboard-page button {
+  font-weight: var(--font-weight-medium);
+}
+
+.topbar strong,
+.sidebar-brand strong,
+.dashboard-page h1,
+.dashboard-page h2,
+.dashboard-page h3,
+.dashboard-page h4,
+.employee-cell strong,
+.activity-person strong,
+.flow-name strong,
+.application-card h2 {
+  font-weight: var(--font-weight-semibold);
+}
+
+.topbar {
+  box-shadow: 0 1px 8px rgba(30, 45, 75, .045);
+}
+
+.kpi-card,
+.activity-card,
+.workflow-card,
+.bottleneck-card,
+.employee-table-card,
+.employee-form-card,
+.preview-card,
+.workflows-table-card,
+.application-card,
+.logs-table-card,
+.settings-card {
+  box-shadow: var(--shadow-sm);
+}
+
+.side-nav a {
+  font-weight: var(--font-weight-medium);
+}
+
+.side-nav a.active {
+  font-weight: var(--font-weight-semibold);
+}
+
+.dashboard-page input,
+.dashboard-page select {
+  color: var(--color-text-strong);
+}
+
+.dashboard-page input::placeholder {
+  color: var(--color-text-muted);
+  opacity: .9;
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    right: 0;
+    width: auto;
+  }
+
+  .dashboard-main,
+  .overview-main,
+  .employees-main,
+  .workflows-main,
+  .applications-main,
+  .settings-main {
+    width: 100%;
+  }
+
+  .dashboard-grid,
+  .overview-grid,
+  .applications-grid,
+  .workflow-summary {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .topbar {
+    height: 58px;
+    padding-right: var(--space-3);
+  }
+
+  .topbar strong {
+    overflow: hidden;
+    font-size: var(--font-size-title-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .directory-heading,
+  .overview-heading,
+  .workflows-heading,
+  .applications-heading,
+  .logs-heading {
+    gap: var(--space-4);
+  }
+
+  .directory-actions,
+  .overview-heading > div:last-child,
+  .logs-actions {
+    width: 100%;
+  }
+
+  .directory-actions > button,
+  .workflows-heading > button,
+  .applications-heading > button {
+    min-height: 42px;
+  }
+
+  .overview-heading > div:last-child > *,
+  .logs-actions > button {
+    flex: 1;
+  }
+
+  .employee-table-card,
+  .workflows-table-card,
+  .logs-table-card {
+    border-radius: var(--radius-md);
+  }
+
+  .table-scroll {
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-heading > div:last-child,
+  .logs-actions,
+  .form-actions > div {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .logs-actions > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .profile-modal-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .profile-modal {
+    max-height: 92vh;
+    overflow-y: auto;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+}

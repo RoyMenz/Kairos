@@ -1,20 +1,9 @@
 import { useEffect, useState } from 'react';
-import NotificationButton from '../components/NotificationButton.jsx';
-
-const menu = [
-  ['▦', 'Dashboard', '/dashboard'],
-  ['◉', 'Employees', '/employees'],
-  ['⌘', 'Workflows', '/workflows'],
-  ['▤', 'Applications', '/applications'],
-  ['☷', 'Logs', '/logs'],
-  ['⚙', 'Settings', '/settings'],
-];
 
 function EmployeesPage() {
   const [employeeList, setEmployeeList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     document.title = 'Employees Directory | PeopleFlow';
@@ -59,51 +48,8 @@ function EmployeesPage() {
   }
 
   return (
-    <div className="dashboard-page employees-page">
-      <button
-        className="mobile-menu"
-        onClick={() => setMenuOpen(!menuOpen)}
-        aria-label="Toggle navigation"
-      >
-        ☰
-      </button>
-      <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
-        <div className="sidebar-brand overview-brand">
-          <i>ϟ</i>
-          <div>
-            <strong>PeopleFlow</strong>
-            <span>Enterprise HR</span>
-          </div>
-        </div>
-        <nav className="side-nav">
-          {menu.map(([icon, label, href]) => (
-            <a
-              className={label === 'Employees' ? 'active' : ''}
-              href={href}
-              key={label}
-            >
-              <span>{icon}</span>
-              {label}
-            </a>
-          ))}
-        </nav>
-        <div className="user-card">
-          <div className="avatar">MC</div>
-          <div>
-            <strong>Marcus Chen</strong>
-            <span>HR Manager</span>
-          </div>
-        </div>
-      </aside>
-
-      <header className="topbar">
-        <div>
-          <strong>Employees Directory</strong>
-        </div>
-        <NotificationButton />
-      </header>
-
-      <main className="employees-main">
+    <>
+      <main className="employees-main employees-page">
         <section className="directory-heading">
           <div>
             <p>Manage identity provisioning and organizational structure.</p>
@@ -328,7 +274,7 @@ function EmployeesPage() {
           </section>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

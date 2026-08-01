@@ -1,7 +1,4 @@
 import { useEffect, useState } from 'react';
-import NotificationButton from '../components/NotificationButton.jsx';
-
-const menu = [['▦', 'Dashboard', '/dashboard'], ['◉', 'Employees', '/employees'], ['⌘', 'Workflows', '/workflows'], ['▤', 'Applications', '/applications'], ['☷', 'Logs', '/logs'], ['⚙', 'Settings', '/settings']];
 const metrics = [
   { icon: '◉', label: 'Total Employees', value: '2,842', badge: '+12%' },
   { icon: '↻', label: 'Active Onboarding', value: '48', badge: 'Active', tone: 'orange' },
@@ -16,25 +13,11 @@ const activity = [
 const chart = [['Mon', 42, 60], ['Tue', 64, 75], ['Wed', 86, 90], ['Thu', 35, 65], ['Fri', 60, 80], ['Sat', 12, 40], ['Sun', 7, 35]];
 
 function DashboardPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [range, setRange] = useState('Last 24 Hours');
   useEffect(() => { document.title = 'Dashboard | PeopleFlow'; }, []);
 
   return (
-    <div className="dashboard-page overview-page">
-      <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
-      <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
-        <div className="sidebar-brand overview-brand"><i>ϟ</i><div><strong>PeopleFlow</strong><span>Enterprise HR</span></div></div>
-        <nav className="side-nav">{menu.map(([icon, label, href]) => <a className={label === 'Dashboard' ? 'active' : ''} href={href} key={label}><span>{icon}</span>{label}</a>)}</nav>
-        <div className="user-card"><div className="avatar">SJ</div><div><strong>Sarah Jenkins</strong><span>HR Manager</span></div></div>
-      </aside>
-
-      <header className="topbar overview-topbar">
-        <strong>Provisioning Overview</strong>
-        <NotificationButton />
-      </header>
-
-      <main className="overview-main">
+    <main className="overview-main overview-page">
         <section className="overview-heading"><div><p>Real-time status of enterprise-wide employee lifecycle events.</p></div><div><select value={range} onChange={(event) => setRange(event.target.value)}><option>Last 24 Hours</option><option>Last 7 Days</option><option>Last 30 Days</option></select><button>☷ Filter</button></div></section>
 
         <section className="kpi-grid">{metrics.map((metric) => <article className={`kpi-card ${metric.tone ? `kpi-card--${metric.tone}` : ''}`} key={metric.label}><div><span className="kpi-icon">{metric.icon}</span><b>{metric.badge}</b></div><p>{metric.label}</p><strong>{metric.value}</strong></article>)}</section>
@@ -50,8 +33,7 @@ function DashboardPage() {
             <section className="bottleneck-card"><h2>Top App Bottlenecks</h2>{[['⌘','GitHub Enterprise','2h 15m avg',85,'red'], ['☵','Slack Workspace','4m avg',10,'blue'], ['▤','NetSuite ERP','45m avg',50,'orange']].map(([icon, name, time, width, tone]) => <div className="app-stat" key={name}><span>{icon}</span><div><p><strong>{name}</strong><small>{time}</small></p><i><b className={tone} style={{ width: `${width}%` }} /></i></div></div>)}<button>Full Infrastructure Report</button></section>
           </aside>
         </div>
-      </main>
-    </div>
+    </main>
   );
 }
 

@@ -101,8 +101,8 @@
   --radius-lg: 12px;
   --radius-xl: 20px;
   --radius-round: 9999px;
-  --shadow-sm: 0 3px 12px rgba(30, 45, 75, 0.04);
-  --shadow-card: 0 7px 18px rgba(29, 50, 90, 0.07);
+  --shadow-sm: 0 3px 12px rgba(30, 45, 75, 0.055);
+  --shadow-card: 0 7px 18px rgba(29, 50, 90, 0.08);
   --shadow-primary: 0 6px 16px rgba(37, 99, 235, 0.18);
   --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.1);
 

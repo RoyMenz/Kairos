@@ -1,14 +1,4 @@
 import { useEffect, useState } from 'react';
-import NotificationButton from '../components/NotificationButton.jsx';
-
-const navItems = [
-  ['▦', 'Dashboard', '/dashboard'],
-  ['◉', 'Employees', '/employees'],
-  ['⌘', 'Workflows', '/workflows'],
-  ['▤', 'Applications', '/applications'],
-  ['☷', 'Logs', '/logs'],
-  ['⚙', 'Settings', '/settings'],
-];
 
 function AddEmployeePage() {
   const [employee, setEmployee] = useState({
@@ -22,7 +12,6 @@ function AddEmployeePage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     document.title = 'Employee Onboarding | PeopleFlow';
@@ -70,59 +59,8 @@ function AddEmployeePage() {
   }
 
   return (
-    <div className="dashboard-page">
-      <button
-        className="mobile-menu"
-        onClick={() => setMenuOpen(!menuOpen)}
-        aria-label="Toggle navigation"
-      >
-        ☰
-      </button>
-      <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
-        <div className="sidebar-brand overview-brand">
-          <i>ϟ</i>
-          <div>
-            <strong>PeopleFlow</strong>
-            <span>Enterprise HR</span>
-          </div>
-        </div>
-        <nav className="side-nav">
-          {navItems.map(([icon, label, href], index) => (
-            <a className={index === 1 ? 'active' : ''} href={href} key={label}>
-              <span>{icon}</span>
-              {label}
-            </a>
-          ))}
-        </nav>
-        <div className="user-card">
-          <div className="avatar">MC</div>
-          <div>
-            <strong>Marcus Chen</strong>
-            <span>HR Manager</span>
-          </div>
-        </div>
-      </aside>
-
-      <header className="topbar">
-        <div>
-          <strong>Create Employee Profile</strong>
-        </div>
-        <div className="top-actions">
-          <button>Help</button>
-          <button
-            className="sign-out"
-            onClick={() => {
-              window.location.href = '/login';
-            }}
-          >
-            Sign out
-          </button>
-          <span />
-          <NotificationButton />
-        </div>
-      </header>
-
-      <main className="dashboard-main">
+    <>
+      <main className="dashboard-main add-employee-page">
         <div className="page-heading">
           <div>
             <p>
@@ -284,7 +222,7 @@ function AddEmployeePage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

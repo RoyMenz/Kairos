@@ -1,7 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import NotificationButton from '../components/NotificationButton.jsx';
-
-const menu = [['▦', 'Dashboard', '/dashboard'], ['◉', 'Employees', '/employees'], ['⌘', 'Workflows', '/workflows'], ['▤', 'Applications', '/applications'], ['☷', 'Logs', '/logs'], ['⚙', 'Settings', '/settings']];
 const workflows = [
   { icon: '＋', name: 'Standard Engineering Onboarding', apps: 'Slack, GitHub, Jira, AWS', type: 'Onboarding', status: 'Active', triggered: '2026-07-31 09:12 AM' },
   { icon: '⊘', name: 'Immediate Termination Protocol', apps: 'Full Lockout Across 52 Apps', type: 'Offboarding', status: 'Active', triggered: '2026-07-30 04:45 PM' },
@@ -10,7 +7,6 @@ const workflows = [
 ];
 
 function WorkflowsPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('All Flows');
   useEffect(() => { document.title = 'Workflows | PeopleFlow'; }, []);
@@ -22,20 +18,7 @@ function WorkflowsPage() {
   }), [filter, query]);
 
   return (
-    <div className="dashboard-page workflows-page">
-      <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
-      <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
-        <div className="sidebar-brand overview-brand"><i>ϟ</i><div><strong>PeopleFlow</strong><span>Enterprise HR</span></div></div>
-        <nav className="side-nav">{menu.map(([icon, label, href]) => <a className={label === 'Workflows' ? 'active' : ''} href={href} key={label}><span>{icon}</span>{label}</a>)}</nav>
-        <div className="user-card"><div className="avatar">SJ</div><div><strong>Sarah Jenkins</strong><span>HR Manager</span></div></div>
-      </aside>
-
-      <header className="topbar workflows-topbar">
-        <strong>Workflow Engine</strong>
-        <NotificationButton />
-      </header>
-
-      <main className="workflows-main">
+    <main className="workflows-main workflows-page">
         <section className="workflows-heading"><div><p>Manage automated identity provisioning flows. Orchestrate access across 50+ enterprise applications.</p></div><button>＋ Create New Workflow</button></section>
 
         <section className="workflows-table-card">
@@ -45,8 +28,7 @@ function WorkflowsPage() {
         </section>
 
         <section className="workflow-summary">{[['ϟ', '1,402', 'Executions this week', 'blue'], ['!', '0', 'Failed workflows', 'red'], ['◷', '1.4s', 'Avg. completion time', 'slate']].map(([icon, value, label, tone]) => <article key={label}><span className={tone}>{icon}</span><div><strong className={tone}>{value}</strong><p>{label}</p></div></article>)}</section>
-      </main>
-    </div>
+    </main>
   );
 }
 
