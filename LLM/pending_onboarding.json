@@ -18,5 +18,13 @@
     "channel": "frontend-developers",
     "invite_sent": true,
     "created_at": "2026-08-01T07:44:41.017611+00:00"
+  },
+  "rishi@nigmafest.in": {
+    "email": "rishi@nigmafest.in",
+    "designation": "Frontend developer",
+    "role": "frontend",
+    "channel": "frontend-developers",
+    "invite_sent": true,
+    "created_at": "2026-08-01T14:00:26.885751+00:00"
   }
 }

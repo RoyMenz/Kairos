@@ -8,20 +8,15 @@ from config import require_settings
 from slack_service import validate_channel_name
 
 
-WORKSPACE_ROLES = frozenset({"backend", "frontend"})
-
-
 def choose_workspace_role(designation: str) -> str:
-    """Classify a designation into an approved work-account role suffix."""
+    """Classify a designation into a normalized role key for resource provisioning."""
     require_settings("GEMINI_API_KEY")
     prompt = f"""
 You classify employee designations for a company onboarding system.
 Employee designation: {designation!r}
-Choose exactly one role: backend, frontend, or unknown.
-Return JSON only: {{"role": "backend"}}.
-Use backend for API, server-side, database, infrastructure, or similar engineering work.
-Use frontend for UI, web-client, mobile-client, or similar engineering work.
-Return unknown if the designation does not clearly fit either role.
+Return one concise role key based on the designation.
+Return JSON only: {{"role": "backend-developer"}}.
+Use lowercase letters, digits, and hyphens only. Do not return unknown.
 """.strip()
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
     response = client.models.generate_content(
@@ -33,9 +28,8 @@ Return unknown if the designation does not clearly fit either role.
         role = json.loads(response.text)["role"]
     except (json.JSONDecodeError, KeyError, TypeError) as error:
         raise RuntimeError("Gemini did not return a valid role decision.") from error
-    if role not in WORKSPACE_ROLES:
-        raise RuntimeError(f"Gemini selected an unsupported role: {role!r}")
-    return role
+    normalized = validate_channel_name(role)
+    return {"backend-developer": "backend", "frontend-developer": "frontend"}.get(normalized, normalized)
 
 
 def choose_channel(designation: str, existing_channels: set[str]) -> str:

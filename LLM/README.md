@@ -1,9 +1,10 @@
 # Kairos employee onboarding
 
 An employee-onboarding service for Google Workspace and Slack. Google Workspace
-provisioning creates a work account with a temporary password and requires a
-password change at first sign-in. Slack onboarding then assigns a channel based
-on the employee's designation.
+provisioning creates a work account with a temporary password, requires a
+password change at first sign-in, and sends a Slack invitation to the new work
+email. The Slack listener assigns a channel based on the employee's designation
+after they join.
 
 ## Setup
 

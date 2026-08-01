@@ -1,4 +1,6 @@
 .env
 service-account.json
+*.pem
+*.log
 *.tmp
 __pycache__/
