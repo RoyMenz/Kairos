@@ -34,3 +34,47 @@ test('unknown routes return 404', async () => {
   assert.equal(response.status, 404);
   assert.deepEqual(await response.json(), { error: 'Route not found' });
 });
+
+test('POST /login returns 400 when missing credentials', async () => {
+  const response = await fetch(`${baseUrl}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'test@example.com' }),
+  });
+
+  assert.equal(response.status, 400);
+  const data = await response.json();
+  assert.equal(data.error, 'Work email and password are required');
+});
+
+test('POST /login returns 401 on invalid credentials', async () => {
+  process.env.MAIL = 'admin@company.com';
+  process.env.PASS = 'secret123';
+
+  const response = await fetch(`${baseUrl}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'wrong@company.com', password: 'wrongpassword' }),
+  });
+
+  assert.equal(response.status, 401);
+  const data = await response.json();
+  assert.equal(data.error, 'Invalid work email or password');
+});
+
+test('POST /login returns 200 on correct credentials matching MAIL & PASS', async () => {
+  process.env.MAIL = 'user@workdomain.com';
+  process.env.PASS = 'securePassword123!';
+
+  const response = await fetch(`${baseUrl}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'user@workdomain.com', password: 'securePassword123!' }),
+  });
+
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.message, 'Login successful');
+  assert.equal(data.user.email, 'user@workdomain.com');
+});
+
