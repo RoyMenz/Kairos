@@ -20,7 +20,7 @@ function ApplicationsPage() {
       <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
       <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}><div className="sidebar-brand overview-brand"><i>ϟ</i><div><strong>PeopleFlow</strong><span>Enterprise HR</span></div></div><nav className="side-nav">{menu.map(([icon, label, href]) => <a className={label === 'Applications' ? 'active' : ''} href={href} key={label}><span>{icon}</span>{label}</a>)}</nav><div className="user-card"><div className="avatar">SJ</div><div><strong>Sarah Jenkins</strong><span>HR Manager</span></div></div></aside>
 
-      <header className="topbar applications-topbar"><strong>Onboarding Workspace</strong><div className="applications-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search applications..." /></div><nav><a href="#provisioning">Provisioning</a><a href="#assets">Assets</a><a href="#security">Security</a></nav><button aria-label="Notifications">♢</button></header>
+      <header className="topbar applications-topbar"><strong>Onboarding Workspace</strong><div className="applications-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search applications..." /></div><nav><a href="#provisioning">Provisioning</a></nav><button aria-label="Notifications">♢</button></header>
 
       <main className="applications-main">
         <section className="applications-heading"><div><h1>Integrated Applications</h1><p>Manage identity provisioning and access control for your enterprise stack.</p></div><button>＋ Connect New App</button></section>

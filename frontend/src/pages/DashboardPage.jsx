@@ -29,7 +29,7 @@ function DashboardPage() {
       </aside>
 
       <header className="topbar overview-topbar">
-        <nav><a className="active" href="#provisioning">Provisioning</a><a href="#assets">Assets</a><a href="#security">Security</a></nav>
+        <nav><a className="active" href="#provisioning">Provisioning</a></nav>
         <div className="overview-actions">
           <button className="notification" aria-label="Notifications">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

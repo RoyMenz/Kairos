@@ -31,7 +31,7 @@ function WorkflowsPage() {
 
       <header className="topbar workflows-topbar">
         <strong>Onboarding Workspace</strong><div className="workflow-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search workflows..." /></div>
-        <nav><a href="#provisioning">Provisioning</a><a href="#assets">Assets</a><a href="#security">Security</a></nav><button className="workflow-bell">♢</button><div className="avatar avatar--small">SJ</div>
+        <nav><a href="#provisioning">Provisioning</a></nav><button className="workflow-bell">♢</button><div className="avatar avatar--small">SJ</div>
       </header>
 
       <main className="workflows-main">

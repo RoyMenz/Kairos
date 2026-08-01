@@ -32,7 +32,7 @@ function EmployeesPage() {
       </aside>
 
       <header className="topbar">
-        <div><strong>Onboarding Workspace</strong><nav><a href="#provisioning">Provisioning</a><a href="#assets">Assets</a><a href="#security">Security</a></nav></div>
+        <div><strong>Onboarding Workspace</strong><nav><a href="#provisioning">Provisioning</a></nav></div>
         <div className="global-search"><span>⌕</span><input placeholder="Global search..." /></div>
       </header>
 

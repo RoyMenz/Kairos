@@ -36,7 +36,7 @@ function AddEmployeePage() {
       </aside>
 
       <header className="topbar">
-        <div><strong>Onboarding Workspace</strong><nav><a href="#provisioning">Provisioning</a><a href="#assets">Assets</a><a href="#security">Security</a></nav></div>
+        <div><strong>Onboarding Workspace</strong><nav><a href="#provisioning">Provisioning</a></nav></div>
         <div className="top-actions"><button aria-label="Notifications">♢</button><span /><button>Help</button><button className="sign-out" onClick={() => { window.location.href = '/login'; }}>Sign out</button></div>
       </header>
 
