@@ -29,9 +29,8 @@ function DashboardPage() {
       </aside>
 
       <header className="topbar overview-topbar">
-        <div className="workspace-search"><span>⌕</span><input placeholder="Search workspace..." /></div>
         <nav><a className="active" href="#provisioning">Provisioning</a><a href="#assets">Assets</a><a href="#security">Security</a></nav>
-        <div className="overview-actions"><button className="notification" aria-label="Notifications">♢<i /></button><button className="add-employee" onClick={() => { window.location.href = '/employees/new'; }}>＋ Add Employee</button></div>
+        <div className="overview-actions"><button className="notification" aria-label="Notifications">♢<i /></button></div>
       </header>
 
       <main className="overview-main">

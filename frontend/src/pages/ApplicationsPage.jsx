@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 
 const menu = [['▦', 'Dashboard', '/dashboard'], ['◉', 'Employees', '/employees'], ['⌘', 'Workflows', '/workflows'], ['▤', 'Applications', '/applications'], ['☷', 'Logs', '/logs'], ['⚙', 'Settings', '/settings']];
 const applications = [
-  { mark: 'S', name: 'Slack Enterprise', description: 'Internal communication and workflow automation platform.', users: '1,248', status: 'Connected', color: '#6d3a8d' },
-  { mark: 'G', name: 'Google Workspace', description: 'Productivity suite including Gmail, Drive, and Sheets.', users: '2,850', status: 'Connected', color: '#4285f4' },
-  { mark: 'GH', name: 'GitHub', description: 'Version control and collaborative software development.', users: '432', status: 'Needs Re-auth', color: '#202532' },
-  { mark: 'N', name: 'Notion AI', description: 'Connected workspace for notes, docs, and projects.', users: '892', status: 'Connected', color: '#111827' },
-  { mark: 'F', name: 'Figma', description: 'Collaborative interface design tool for teams.', users: '156', status: 'Connected', color: '#ef5b45' },
+  { mark: 'S', name: 'Slack Enterprise', description: 'Internal communication and workflow automation platform.', users: '1,248', status: 'Connected', color: 'var(--color-brand-slack)' },
+  { mark: 'G', name: 'Google Workspace', description: 'Productivity suite including Gmail, Drive, and Sheets.', users: '2,850', status: 'Connected', color: 'var(--color-brand-google)' },
+  { mark: 'GH', name: 'GitHub', description: 'Version control and collaborative software development.', users: '432', status: 'Needs Re-auth', color: 'var(--color-brand-github)' },
+  { mark: 'N', name: 'Notion AI', description: 'Connected workspace for notes, docs, and projects.', users: '892', status: 'Connected', color: 'var(--color-brand-notion)' },
+  { mark: 'F', name: 'Figma', description: 'Collaborative interface design tool for teams.', users: '156', status: 'Connected', color: 'var(--color-brand-figma)' },
 ];
 
 function ApplicationsPage() {
