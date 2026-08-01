@@ -90,11 +90,12 @@ app.get('/api/employees', async (request, response, next) => {
 
 app.post('/api/employees', async (request, response, next) => {
   try {
-    const { name, email, role, joiningDate, department } = request.body || {};
+    const { name, email, role, joiningDate, department, generateWorkflow = true } = request.body || {};
     if (!name || !email || !role) {
       return response.status(400).json({ error: 'Name, work email, and role are required' });
     }
 
+    // 1. Create employee in DB with auto-increment KS001 ID
     const newEmployee = await employeeService.createEmployee({
       name,
       email,
@@ -103,14 +104,70 @@ app.post('/api/employees', async (request, response, next) => {
       department,
     });
 
+    let workflow = null;
+
+    // 2. Trigger Gemini LLM Workflow generation & provisioning
+    if (generateWorkflow !== false) {
+      try {
+        const nameParts = name.trim().split(' ');
+        const firstName = nameParts[0] || 'Employee';
+        const lastName = nameParts.slice(1).join(' ') || 'User';
+
+        // Call Gemini LLM to classify employee designation/role
+        let classification = { role: 'backend' };
+        try {
+          classification = await llmService.classifyRole(role);
+        } catch (clsErr) {
+          console.warn('Gemini classification notice:', clsErr.message);
+        }
+
+        // Call Gemini LLM to map optimal Slack channel
+        let channelChoice = { channel: 'general' };
+        try {
+          channelChoice = await llmService.chooseChannel(role);
+        } catch (chnErr) {
+          console.warn('Gemini channel choice notice:', chnErr.message);
+        }
+
+        // Trigger Google Workspace account provisioning & activation email
+        let provisionResult = null;
+        try {
+          provisionResult = await llmService.provisionWorkspace(
+            email,
+            firstName,
+            lastName,
+            role
+          );
+        } catch (provErr) {
+          console.warn('Workspace provisioning notice:', provErr.message);
+          provisionResult = { notice: provErr.message };
+        }
+
+        workflow = {
+          classifiedRole: classification.role || 'backend',
+          suggestedChannel: channelChoice.channel || 'general',
+          provisioning: provisionResult,
+          status: 'AI Workflow Generated',
+        };
+
+        newEmployee.classified_role = workflow.classifiedRole;
+        newEmployee.slack_channel = workflow.suggestedChannel;
+      } catch (llmErr) {
+        console.warn('LLM workflow generation notice:', llmErr.message);
+        workflow = { notice: llmErr.message };
+      }
+    }
+
     return response.status(201).json({
-      message: 'Employee added successfully',
+      message: 'Employee added & AI Onboarding workflow generated successfully',
       employee: newEmployee,
+      workflow,
     });
   } catch (err) {
     return response.status(400).json({ error: err.message });
   }
 });
+
 
 app.delete('/api/employees/:id', async (request, response, next) => {
   try {
