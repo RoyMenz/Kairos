@@ -16,7 +16,7 @@ function WorkflowsPage() {
   async function loadWorkflowData() {
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
       // 1. Fetch pending onboarding records from LLM backend
       let pendingRes;
@@ -54,7 +54,7 @@ function WorkflowsPage() {
     setActionLoading(true);
     setStatusMessage('');
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
       let res;
       try {
         res = await fetch('/api/onboarding/check-activation', { method: 'POST' });
@@ -80,7 +80,7 @@ function WorkflowsPage() {
     setActionLoading(true);
     setStatusMessage('');
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
       let res;
       try {
         res = await fetch('/api/onboarding/external', {
@@ -114,7 +114,7 @@ function WorkflowsPage() {
     setActionLoading(true);
     setStatusMessage('');
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
       let res;
       try {
         res = await fetch('/api/onboarding/start', {

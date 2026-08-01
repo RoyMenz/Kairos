@@ -19,7 +19,7 @@ function DashboardPage() {
   async function fetchDashboardStats() {
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
       let response;
       try {
         response = await fetch('/api/dashboard/stats');

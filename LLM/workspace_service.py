@@ -9,7 +9,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from config import require_settings
+from config import require_settings, resolve_file_path
 
 
 DIRECTORY_SCOPES = ("https://www.googleapis.com/auth/admin.directory.user",)
@@ -18,8 +18,9 @@ LOCAL_PART = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 
 def _directory_client():
     require_settings("GOOGLE_ADMIN_EMAIL", "GOOGLE_SERVICE_ACCOUNT_FILE")
+    sa_file = resolve_file_path(os.environ["GOOGLE_SERVICE_ACCOUNT_FILE"])
     credentials = service_account.Credentials.from_service_account_file(
-        os.environ["GOOGLE_SERVICE_ACCOUNT_FILE"], scopes=DIRECTORY_SCOPES
+        sa_file, scopes=DIRECTORY_SCOPES
     ).with_subject(os.environ["GOOGLE_ADMIN_EMAIL"])
     return build("admin", "directory_v1", credentials=credentials, cache_discovery=False)
 

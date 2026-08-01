@@ -9,7 +9,7 @@ from requests.auth import HTTPBasicAuth
 import jwt
 import requests
 
-from config import require_settings
+from config import require_settings, resolve_file_path
 
 
 ROLE_RESOURCES = {
@@ -94,7 +94,8 @@ def _ensure_jira_project_and_group(role: str) -> tuple[str, str]:
 def _github_headers() -> dict[str, str]:
     require_settings("GITHUB_APP_ID", "GITHUB_APP_INSTALLATION_ID", "GITHUB_APP_PRIVATE_KEY_FILE")
     now = int(time.time())
-    private_key = open(os.environ["GITHUB_APP_PRIVATE_KEY_FILE"], encoding="utf-8").read()
+    key_file = resolve_file_path(os.environ["GITHUB_APP_PRIVATE_KEY_FILE"])
+    private_key = open(key_file, encoding="utf-8").read()
     app_jwt = jwt.encode({"iat": now - 60, "exp": now + 540, "iss": os.environ["GITHUB_APP_ID"]}, private_key, algorithm="RS256")
     token_response = requests.post(
         f"https://api.github.com/app/installations/{os.environ['GITHUB_APP_INSTALLATION_ID']}/access_tokens",

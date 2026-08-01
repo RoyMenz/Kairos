@@ -12,7 +12,7 @@ function EmployeesPage() {
 
   async function fetchEmployees() {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
       let response;
       try {
         response = await fetch('/api/employees');
@@ -34,7 +34,7 @@ function EmployeesPage() {
     const empId = employee.employee_id || employee.email;
     if (window.confirm(`Delete ${employee.name} (${empId})? This action cannot be undone.`)) {
       try {
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
         try {
           await fetch(`/api/employees/${encodeURIComponent(empId)}`, { method: 'DELETE' });
         } catch (e) {

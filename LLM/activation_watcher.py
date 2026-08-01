@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-from config import require_settings
+from config import require_settings, resolve_file_path
 
 
 REPORTS_SCOPE = "https://www.googleapis.com/auth/admin.reports.audit.readonly"
@@ -14,8 +14,9 @@ REPORTS_SCOPE = "https://www.googleapis.com/auth/admin.reports.audit.readonly"
 
 def password_was_changed(work_email: str, created_at: str) -> bool:
     require_settings("GOOGLE_ADMIN_EMAIL", "GOOGLE_SERVICE_ACCOUNT_FILE")
+    sa_file = resolve_file_path(os.environ["GOOGLE_SERVICE_ACCOUNT_FILE"])
     credentials = service_account.Credentials.from_service_account_file(
-        os.environ["GOOGLE_SERVICE_ACCOUNT_FILE"],
+        sa_file,
         scopes=[REPORTS_SCOPE, "https://www.googleapis.com/auth/admin.directory.user"],
     ).with_subject(os.environ["GOOGLE_ADMIN_EMAIL"])
     directory = build("admin", "directory_v1", credentials=credentials, cache_discovery=False)

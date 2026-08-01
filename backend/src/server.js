@@ -1,11 +1,11 @@
 const app = require('./app');
 const { startListener } = require('./services/llmService');
 
-const port = Number.parseInt(process.env.PORT || '3000', 10);
+const port = Number.parseInt(process.env.BACKEND_PORT || process.env.PORT || '5000', 10);
 const llmListener = startListener();
 
 const server = app.listen(port, () => {
-  console.log(`Server listening on http://localhost:${port}`);
+  console.log(`Backend API server listening on http://localhost:${port}`);
   console.log('LLM listener started automatically.');
 });
 
