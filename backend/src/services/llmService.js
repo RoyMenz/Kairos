@@ -26,6 +26,29 @@ function getBridgeScriptPath() {
   return path.resolve(__dirname, '../../../LLM/api_bridge.py');
 }
 
+function startListener() {
+  const pythonExe = getPythonExecutable();
+  const llmDir = path.resolve(__dirname, '../../../LLM');
+  const listenerScript = path.join(llmDir, 'app.py');
+  const child = spawn(pythonExe, [listenerScript, 'listen'], {
+    cwd: llmDir,
+    env: { ...process.env },
+    stdio: 'inherit',
+  });
+
+  child.on('error', (error) => {
+    console.error(`Failed to start the LLM listener: ${error.message}`);
+  });
+
+  child.on('exit', (code, signal) => {
+    if (code !== 0 && signal === null) {
+      console.error(`LLM listener exited with code ${code}.`);
+    }
+  });
+
+  return child;
+}
+
 function runBridgeAction(action, args = []) {
   return new Promise((resolve, reject) => {
     const pythonExe = getPythonExecutable();
@@ -123,6 +146,7 @@ async function checkActivation() {
 }
 
 module.exports = {
+  startListener,
   classifyRole,
   chooseChannel,
   provisionWorkspace,
