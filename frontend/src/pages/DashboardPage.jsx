@@ -79,7 +79,7 @@ function DashboardPage() {
       <main className="overview-main overview-page">
         <section className="overview-heading">
           <div>
-            <p>Real-time status of enterprise-wide employee lifecycle events from Supabase &amp; Gemini LLM.</p>
+            <h1>Project Overview</h1>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <select value={range} onChange={(event) => setRange(event.target.value)}>

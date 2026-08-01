@@ -45,6 +45,8 @@ const appBarTitles = {
 
 function App() {
   const [theme, setTheme] = useState(() => {
+    const initializedTheme = document.documentElement.dataset.theme;
+    if (initializedTheme === 'dark' || initializedTheme === 'light') return initializedTheme;
     const savedTheme = localStorage.getItem('peopleflow-theme');
     if (savedTheme === 'dark' || savedTheme === 'light') return savedTheme;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
