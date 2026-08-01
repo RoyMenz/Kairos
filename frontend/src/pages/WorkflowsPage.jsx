@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import NotificationButton from '../components/NotificationButton.jsx';
 
 const menu = [['▦', 'Dashboard', '/dashboard'], ['◉', 'Employees', '/employees'], ['⌘', 'Workflows', '/workflows'], ['▤', 'Applications', '/applications'], ['☷', 'Logs', '/logs'], ['⚙', 'Settings', '/settings']];
 const workflows = [
@@ -31,15 +32,11 @@ function WorkflowsPage() {
 
       <header className="topbar workflows-topbar">
         <strong>Workflow Engine</strong>
-        <button className="workflow-bell">♢</button><div className="avatar avatar--small">SJ</div>
+        <NotificationButton />
       </header>
 
       <main className="workflows-main">
         <section className="workflows-heading"><div><p>Manage automated identity provisioning flows. Orchestrate access across 50+ enterprise applications.</p></div><button>＋ Create New Workflow</button></section>
-
-        <section className="workflow-feature-grid">
-          <article className="template-card"><div><span>Pro Templates</span><h2>Global Offboarding</h2><p>One-click deprovisioning for 12+ standard apps.</p></div><button>Browse Library</button></article>
-        </section>
 
         <section className="workflows-table-card">
           <header><div>{['All Flows', 'Onboarding', 'Offboarding'].map((name) => <button className={filter === name ? 'active' : ''} onClick={() => setFilter(name)} key={name}>{name}</button>)}</div><button aria-label="More filters">☷</button></header>

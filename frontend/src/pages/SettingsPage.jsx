@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import NotificationButton from '../components/NotificationButton.jsx';
 
 const menu = [['▦', 'Dashboard', '/dashboard'], ['◉', 'Employees', '/employees'], ['⌘', 'Workflows', '/workflows'], ['▤', 'Applications', '/applications'], ['☷', 'Logs', '/logs'], ['⚙', 'Settings', '/settings']];
 const settingTabs = ['General', 'Security & SSO', 'Notifications', 'Billing & Usage', 'API Keys'];
@@ -31,7 +32,7 @@ function SettingsPage() {
   return <div className="dashboard-page settings-page">
     <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
     <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}><div className="sidebar-brand overview-brand"><i>ϟ</i><div><strong>PeopleFlow</strong><span>Enterprise HR</span></div></div><nav className="side-nav">{menu.map(([icon, label, href]) => <a className={label === 'Settings' ? 'active' : ''} href={href} key={label}><span>{icon}</span>{label}</a>)}</nav><div className="user-card"><div className="avatar">JD</div><div><strong>John Doe</strong><span>admin@peopleflow.com</span></div></div></aside>
-    <header className="topbar settings-topbar"><strong>Organization Settings</strong><button aria-label="Notifications">♢</button><div className="avatar avatar--small">JD</div></header>
+    <header className="topbar settings-topbar"><strong>Organization Settings</strong><NotificationButton /></header>
 
     <main className="settings-main"><header className="settings-heading"><p>Manage your enterprise environment, security policies, and automation triggers.</p></header>
       <div className="settings-layout"><aside className="settings-tabs">{settingTabs.map((tab) => <button className={activeTab === tab ? 'active' : ''} onClick={() => selectTab(tab)} key={tab}><span>{tab}</span><b>›</b></button>)}</aside>

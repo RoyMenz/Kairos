@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import NotificationButton from '../components/NotificationButton.jsx';
 
 const navItems = [
   ['▦', 'Dashboard', '/dashboard'], ['◉', 'Employees', '/employees'], ['⌘', 'Workflows', '/workflows'],
@@ -37,16 +38,14 @@ function AddEmployeePage() {
 
       <header className="topbar">
         <div><strong>Create Employee Profile</strong></div>
-        <div className="top-actions"><button aria-label="Notifications">♢</button><span /><button>Help</button><button className="sign-out" onClick={() => { window.location.href = '/login'; }}>Sign out</button></div>
+        <div className="top-actions"><button>Help</button><button className="sign-out" onClick={() => { window.location.href = '/login'; }}>Sign out</button><span /><NotificationButton /></div>
       </header>
 
       <main className="dashboard-main">
         <div className="page-heading">
           <div><p>Employees <span>›</span> Add New Employee</p></div>
           <div className="stepper">
-            <div className="step active"><b>1</b><span>Details</span></div><i />
-            <div className="step"><b>2</b><span>Hardware</span></div><i />
-            <div className="step"><b>3</b><span>Review</span></div>
+            <div className="step active"><b>1</b><span>Details</span></div>
           </div>
         </div>
 

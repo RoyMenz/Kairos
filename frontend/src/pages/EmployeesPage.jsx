@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import NotificationButton from '../components/NotificationButton.jsx';
 
 const employees = [
   { initials: 'MT', name: 'Marcus Thorne', email: 'm.thorne@peopleflow.ai', department: 'Product Design', role: 'Lead Designer', status: 'Active' },
@@ -33,6 +34,7 @@ function EmployeesPage() {
 
       <header className="topbar">
         <div><strong>Employees</strong></div>
+        <NotificationButton />
       </header>
 
       <main className="employees-main">

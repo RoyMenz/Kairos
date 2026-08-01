@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import NotificationButton from '../components/NotificationButton.jsx';
 
 const menu = [['▦', 'Dashboard', '/dashboard'], ['◉', 'Employees', '/employees'], ['⌘', 'Workflows', '/workflows'], ['▤', 'Applications', '/applications'], ['☷', 'Logs', '/logs'], ['⚙', 'Settings', '/settings']];
 const events = [
@@ -31,7 +32,7 @@ function LogsPage() {
   return <div className="dashboard-page logs-page">
     <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
     <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}><div className="sidebar-brand overview-brand"><i>ϟ</i><div><strong>PeopleFlow</strong><span>Enterprise HR</span></div></div><nav className="side-nav">{menu.map(([icon, label, href]) => <a className={label === 'Logs' ? 'active' : ''} href={href} key={label}><span>{icon}</span>{label}</a>)}</nav><div className="user-card"><div className="avatar">AC</div><div><strong>Alex Chen</strong><span>System Admin</span></div></div></aside>
-    <header className="topbar logs-topbar"><strong>Event Logs</strong><button>♢</button></header>
+    <header className="topbar logs-topbar"><strong>Event Logs</strong><NotificationButton /></header>
 
     <main className="logs-main">
       <aside className="logs-filters"><header><h2>Filters</h2><button onClick={resetFilters}>Reset</button></header><section><h3>Status</h3>{['Success', 'Warning', 'Critical'].map((status) => <label key={status}><input type="checkbox" checked={statuses.includes(status)} onChange={() => toggleStatus(status)} />{status}</label>)}</section><section><h3>Application</h3><select value={application} onChange={(event) => setApplication(event.target.value)}><option>All Applications</option><option>Slack</option><option>Jira Cloud</option><option>AWS Console</option><option>GitHub Enterprise</option></select></section><section><h3>Date Range</h3><input type="date" /><input type="date" /></section></aside>
