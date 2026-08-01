@@ -21,11 +21,13 @@
   },
   "rishi@nigmafest.in": {
     "email": "rishi@nigmafest.in",
-    "designation": "JAVA Developer",
+    "designation": "Java Developer",
     "role": "backend",
-    "awaiting_password_change": true,
-    "invite_sent": false,
-    "created_at": "2026-08-01T18:42:51.910440+00:00"
+    "channel": "backend-developers",
+    "invite_sent": true,
+    "created_at": "2026-08-01T22:24:37.198730+00:00",
+    "external_invites_sent": true,
+    "awaiting_password_change": false
   },
   "rishika@nigmafest.in": {
     "email": "rishika@nigmafest.in",

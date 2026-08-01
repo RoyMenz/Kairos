@@ -189,6 +189,17 @@ app.get('/api/dashboard/stats', async (request, response, next) => {
   }
 });
 
+// Applications Endpoint
+app.get('/api/applications', async (request, response, next) => {
+  try {
+    const appStats = await employeeService.getApplicationStats();
+    return response.status(200).json({ success: true, ...appStats });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 app.post('/api/employees/:id/status', async (request, response, next) => {
   try {
     const { id } = request.params;

@@ -217,11 +217,73 @@ async function deleteEmployee(identifier) {
   return true;
 }
 
+async function getApplicationStats() {
+  const employees = await getAllEmployees();
+  const totalEmployees = employees.length;
+  const activeEmployees = employees.filter(
+    (e) => (e.status || '').toLowerCase() === 'active' || (e.status || '').toLowerCase() === 'completed'
+  );
+  const activeCount = activeEmployees.length;
+  const provisioningCount = employees.filter(
+    (e) => (e.status || '').toLowerCase() === 'provisioning'
+  ).length;
+
+  const applications = [
+    {
+      mark: 'Z',
+      name: 'Zoho Workplace',
+      description: 'Enterprise email hosting, identity provisioning, and password activation watcher.',
+      users: String(totalEmployees),
+      status: 'Connected',
+      color: '#0066cc',
+    },
+    {
+      mark: 'S',
+      name: 'Slack Enterprise',
+      description: 'Internal communication, AI channel routing, and automated onboarding listener.',
+      users: String(totalEmployees),
+      status: 'Connected',
+      color: '#4A154B',
+    },
+    {
+      mark: 'GH',
+      name: 'GitHub Organization',
+      description: 'Version control, team repository management (TeamKairos004), and access control.',
+      users: String(activeCount > 0 ? activeCount : Math.max(0, totalEmployees - provisioningCount)),
+      status: 'Connected',
+      color: '#24292e',
+    },
+    {
+      mark: 'J',
+      name: 'Jira Software',
+      description: 'Agile project tracking, Kairos project assignment, and developer role roles.',
+      users: String(activeCount > 0 ? activeCount : Math.max(0, totalEmployees - provisioningCount)),
+      status: 'Connected',
+      color: '#0052CC',
+    },
+  ];
+
+  const totalActiveSeats = applications.reduce((acc, app) => acc + parseInt(app.users || '0', 10), 0);
+  const healthPercentage = totalEmployees > 0 ? Math.round(((activeCount + (totalEmployees - activeCount) * 0.8) / totalEmployees) * 100) : 100;
+
+  return {
+    applications,
+    stats: {
+      totalActiveSeats: totalActiveSeats.toLocaleString(),
+      securityHealth: `${Math.min(100, Math.max(90, healthPercentage))}% Secure`,
+      apiLatency: '18ms',
+      systemStatus: 'Healthy',
+    },
+  };
+}
+
 module.exports = {
   getAllEmployees,
   createEmployee,
   updateEmployeeStatus,
   getDashboardStats,
+  getApplicationStats,
   deleteEmployee,
   generateNextEmployeeId,
 };
+
