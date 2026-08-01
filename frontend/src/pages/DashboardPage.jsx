@@ -30,7 +30,15 @@ function DashboardPage() {
 
       <header className="topbar overview-topbar">
         <nav><a className="active" href="#provisioning">Provisioning</a><a href="#assets">Assets</a><a href="#security">Security</a></nav>
-        <div className="overview-actions"><button className="notification" aria-label="Notifications">♢<i /></button></div>
+        <div className="overview-actions">
+          <button className="notification" aria-label="Notifications">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+              <path d="M10 21h4" />
+            </svg>
+            <i />
+          </button>
+        </div>
       </header>
 
       <main className="overview-main">

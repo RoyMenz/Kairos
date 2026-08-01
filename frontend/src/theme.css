@@ -4,29 +4,38 @@
   /* Typography */
   --font-family-sans: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-family-mono: 'JetBrains Mono', Consolas, monospace;
-  --font-size-2xs: 8px;
-  --font-size-xs: 9px;
-  --font-size-sm: 10px;
-  --font-size-md: 11px;
-  --font-size-base: 12px;
-  --font-size-body: 13px;
-  --font-size-body-lg: 14px;
-  --font-size-subtitle: 16px;
-  --font-size-title-sm: 17px;
-  --font-size-title: 18px;
-  --font-size-title-md: 19px;
-  --font-size-title-lg: 20px;
+  /* Canonical type scale: use the same role at the same size on every page. */
+  --type-caption: 10px;
+  --type-label: 12px;
+  --type-body: 14px;
+  --type-card-title: 18px;
+  --type-section-title: 20px;
+  --type-page-title: 28px;
+
+  /* Compatibility aliases used by existing page styles. */
+  --font-size-2xs: var(--type-caption);
+  --font-size-xs: var(--type-caption);
+  --font-size-sm: var(--type-caption);
+  --font-size-md: var(--type-label);
+  --font-size-base: var(--type-label);
+  --font-size-body: var(--type-body);
+  --font-size-body-lg: var(--type-body);
+  --font-size-subtitle: var(--type-card-title);
+  --font-size-title-sm: var(--type-card-title);
+  --font-size-title: var(--type-card-title);
+  --font-size-title-md: var(--type-card-title);
+  --font-size-title-lg: var(--type-section-title);
   --font-size-brand: 21px;
   --font-size-icon-lg: 24px;
   --font-size-icon-feature: 25px;
   --font-size-icon-xl: 26px;
-  --font-size-page: 27px;
-  --font-size-page-sm: 28px;
+  --font-size-page: var(--type-page-title);
+  --font-size-page-sm: var(--type-page-title);
   --font-size-metric-sm: 29px;
   --font-size-login-title: 30px;
   --font-size-metric: 31px;
   --font-size-icon-2xl: 32px;
-  --font-size-page-lg: 34px;
+  --font-size-page-lg: var(--type-page-title);
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
