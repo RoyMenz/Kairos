@@ -30,7 +30,7 @@ function LogsPage() {
 
   return <div className="dashboard-page logs-page">
     <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
-    <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}><div className="sidebar-brand"><strong>PeopleFlow</strong><span>Enterprise HR</span></div><nav className="side-nav">{menu.map(([icon, label, href]) => <a className={label === 'Logs' ? 'active' : ''} href={href} key={label}><span>{icon}</span>{label}</a>)}</nav><div className="user-card"><div className="avatar">AC</div><div><strong>Alex Chen</strong><span>System Admin</span></div></div></aside>
+    <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}><div className="sidebar-brand overview-brand"><i>ϟ</i><div><strong>PeopleFlow</strong><span>Enterprise HR</span></div></div><nav className="side-nav">{menu.map(([icon, label, href]) => <a className={label === 'Logs' ? 'active' : ''} href={href} key={label}><span>{icon}</span>{label}</a>)}</nav><div className="user-card"><div className="avatar">AC</div><div><strong>Alex Chen</strong><span>System Admin</span></div></div></aside>
     <header className="topbar logs-topbar"><strong>Onboarding Workspace</strong><div className="logs-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search logs, employees, or events..." /></div><nav><a href="#provisioning">Provisioning</a><a href="#assets">Assets</a><a href="#security">Security</a></nav><button>♢</button></header>
 
     <main className="logs-main">

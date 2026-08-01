@@ -24,7 +24,7 @@ function WorkflowsPage() {
     <div className="dashboard-page workflows-page">
       <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
       <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
-        <div className="sidebar-brand"><strong>PeopleFlow</strong><span>Enterprise HR</span></div>
+        <div className="sidebar-brand overview-brand"><i>ϟ</i><div><strong>PeopleFlow</strong><span>Enterprise HR</span></div></div>
         <nav className="side-nav">{menu.map(([icon, label, href]) => <a className={label === 'Workflows' ? 'active' : ''} href={href} key={label}><span>{icon}</span>{label}</a>)}</nav>
         <div className="user-card"><div className="avatar">SJ</div><div><strong>Sarah Jenkins</strong><span>HR Manager</span></div></div>
       </aside>

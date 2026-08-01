@@ -25,7 +25,7 @@ function AddEmployeePage() {
     <div className="dashboard-page">
       <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
       <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
-        <div className="sidebar-brand"><strong>PeopleFlow</strong><span>Enterprise HR</span></div>
+        <div className="sidebar-brand overview-brand"><i>ϟ</i><div><strong>PeopleFlow</strong><span>Enterprise HR</span></div></div>
         <nav className="side-nav">
           {navItems.map(([icon, label, href], index) => <a className={index === 1 ? 'active' : ''} href={href} key={label}><span>{icon}</span>{label}</a>)}
         </nav>

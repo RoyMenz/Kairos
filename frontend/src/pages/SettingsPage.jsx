@@ -30,7 +30,7 @@ function SettingsPage() {
 
   return <div className="dashboard-page settings-page">
     <button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
-    <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}><div className="sidebar-brand"><strong>PeopleFlow</strong><span>Enterprise HR</span></div><nav className="side-nav">{menu.map(([icon, label, href]) => <a className={label === 'Settings' ? 'active' : ''} href={href} key={label}><span>{icon}</span>{label}</a>)}</nav><div className="user-card"><div className="avatar">JD</div><div><strong>John Doe</strong><span>admin@peopleflow.com</span></div></div></aside>
+    <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}><div className="sidebar-brand overview-brand"><i>ϟ</i><div><strong>PeopleFlow</strong><span>Enterprise HR</span></div></div><nav className="side-nav">{menu.map(([icon, label, href]) => <a className={label === 'Settings' ? 'active' : ''} href={href} key={label}><span>{icon}</span>{label}</a>)}</nav><div className="user-card"><div className="avatar">JD</div><div><strong>John Doe</strong><span>admin@peopleflow.com</span></div></div></aside>
     <header className="topbar settings-topbar"><strong>Onboarding Workspace</strong><nav><a href="#provisioning">Provisioning</a><a href="#assets">Assets</a><a href="#security">Security</a></nav><button aria-label="Notifications">♢</button><div className="avatar avatar--small">JD</div></header>
 
     <main className="settings-main"><header className="settings-heading"><h1>Organization Settings</h1><p>Manage your enterprise environment, security policies, and automation triggers.</p></header>
