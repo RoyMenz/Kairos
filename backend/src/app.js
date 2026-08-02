@@ -300,9 +300,15 @@ app.post('/api/onboarding/external', async (request, response, next) => {
     // Automatically update employee status in DB to Active & set completed_at timestamp
     await employeeService.updateEmployeeStatus(workEmail, 'Active');
 
+    const accessDesc = result.technical
+      ? 'GitHub & Jira access provisioned'
+      : result.jira_required
+      ? 'Jira access provisioned (GitHub skipped for non-technical role)'
+      : 'External access checked (GitHub & Jira skipped for non-technical role)';
+
     return response
       .status(200)
-      .json({ message: 'External onboarding access initiated & employee marked Active in DB', ...result });
+      .json({ message: `External onboarding access initiated (${accessDesc}) & employee marked Active in DB`, ...result });
   } catch (err) {
     next(err);
   }
@@ -349,14 +355,129 @@ app.post('/api/onboarding/check-activation', async (request, response, next) => 
   }
 });
 
+app.get('/api/auth/github/callback', async (request, response, next) => {
+  try {
+    const { code, state } = request.query;
+    if (!code) {
+      return response.status(400).json({ error: 'OAuth code missing' });
+    }
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      return response.status(500).json({ error: 'GitHub OAuth Client credentials not configured' });
+    }
+
+    const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) {
+      return response.status(400).json({ error: tokenData.error_description || 'GitHub OAuth exchange failed' });
+    }
+
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}`, 'User-Agent': 'Kairos-App' },
+    });
+    const userData = await userRes.json();
+    const githubUsername = userData.login;
+
+    if (state && githubUsername) {
+      await employeeService.updateEmployeeStatus(state, 'Active', {
+        github_username: githubUsername,
+        platform_status: { github: 'Connected' },
+      });
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    return response.redirect(`${frontendUrl}/employees?github_linked=true&user=${encodeURIComponent(githubUsername || '')}`);
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.post('/api/employees/:id/offboard', async (request, response, next) => {
   try {
     const { id } = request.params;
-    const updated = await employeeService.updateEmployeeStatus(id, 'Offboarded');
-    return response.status(200).json({
-      message: 'Offboarding sequence initiated & employee status updated to Offboarded in DB',
-      employee: updated,
+    const employees = await employeeService.getAllEmployees();
+    const emp = employees.find((e) => e.employee_id === id || e.email === id || e.work_email === id);
+
+    const workEmail = emp ? (emp.work_email || emp.email) : id;
+    const results = {};
+
+    try {
+      results.zoho = await llmService.disableZoho(workEmail);
+    } catch (zErr) {
+      results.zoho = { notice: zErr.message };
+    }
+
+    try {
+      results.github = await llmService.removeGithub(emp?.github_username || workEmail, emp?.github_invitation_id || '');
+    } catch (gErr) {
+      results.github = { notice: gErr.message };
+    }
+
+    try {
+      results.jira = await llmService.revokeJira(emp?.jira_account_id || workEmail);
+    } catch (jErr) {
+      results.jira = { notice: jErr.message };
+    }
+
+    try {
+      results.slack = await llmService.removeSlackUser(emp?.slack_user_id || workEmail);
+    } catch (sErr) {
+      results.slack = { notice: sErr.message };
+    }
+
+    const updated = await employeeService.updateEmployeeStatus(id, 'Offboarded', {
+      platform_status: { zoho: 'Offboarded', github: 'Offboarded', jira: 'Offboarded', slack: 'Offboarded' },
     });
+
+    return response.status(200).json({
+      message: 'Offboarding sequence completed across Zoho, GitHub, Jira, and Slack. Note: For non-Enterprise Slack plans, a workspace owner must deactivate the user in Slack Admin Console.',
+      employee: updated,
+      results,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/employees/:id/retry', async (request, response, next) => {
+  try {
+    const { id } = request.params;
+    const { platform } = request.body || {};
+    const employees = await employeeService.getAllEmployees();
+    const emp = employees.find((e) => e.employee_id === id || e.email === id || e.work_email === id);
+    if (!emp) {
+      return response.status(404).json({ error: 'Employee not found' });
+    }
+
+    const workEmail = emp.work_email || emp.email;
+    const role = emp.role || 'backend';
+    let result = null;
+
+    if (platform === 'github' || platform === 'jira' || platform === 'external') {
+      result = await llmService.startExternalOnboarding(workEmail, role);
+      await employeeService.updateEmployeeStatus(workEmail, emp.status || 'Active', {
+        github_invitation_id: result.github_invitation_id || emp.github_invitation_id,
+        jira_account_id: result.jira_account_id || emp.jira_account_id,
+      });
+    } else if (platform === 'zoho') {
+      const nameParts = (emp.name || '').trim().split(' ');
+      result = await llmService.provisionWorkspace(emp.personal_email || workEmail, nameParts[0] || 'Employee', nameParts.slice(1).join(' ') || 'User', role);
+      if (result.zoho_zuid) {
+        await employeeService.updateEmployeeStatus(workEmail, emp.status || 'Provisioning', {
+          zoho_zuid: result.zoho_zuid,
+          zoho_account_id: result.zoho_account_id,
+        });
+      }
+    } else {
+      result = await llmService.checkActivation();
+    }
+
+    return response.status(200).json({ message: `Provisioning retry executed for ${platform || 'all'}`, result });
   } catch (err) {
     next(err);
   }

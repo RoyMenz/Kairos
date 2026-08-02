@@ -145,6 +145,26 @@ async function checkActivation() {
   return await runBridgeAction('check-activation');
 }
 
+async function disableZoho(workEmail) {
+  if (!workEmail) throw new Error('workEmail is required');
+  return await runBridgeAction('disable-zoho', [workEmail.trim()]);
+}
+
+async function removeGithub(usernameOrEmail, invitationId = '') {
+  if (!usernameOrEmail) throw new Error('usernameOrEmail is required');
+  return await runBridgeAction('remove-github', [usernameOrEmail.trim(), invitationId.trim()]);
+}
+
+async function revokeJira(accountIdOrEmail) {
+  if (!accountIdOrEmail) throw new Error('accountIdOrEmail is required');
+  return await runBridgeAction('revoke-jira', [accountIdOrEmail.trim()]);
+}
+
+async function removeSlackUser(target) {
+  if (!target) throw new Error('target is required');
+  return await runBridgeAction('remove-slack-user', [target.trim()]);
+}
+
 module.exports = {
   startListener,
   classifyRole,
@@ -154,4 +174,8 @@ module.exports = {
   startExternalOnboarding,
   getPendingOnboarding,
   checkActivation,
+  disableZoho,
+  removeGithub,
+  revokeJira,
+  removeSlackUser,
 };

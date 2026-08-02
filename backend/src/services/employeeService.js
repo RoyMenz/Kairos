@@ -4,6 +4,18 @@ const { getSupabaseClient } = require('../supabase');
 
 const LOCAL_STORE_PATH = path.resolve(__dirname, '../../data/employees.json');
 
+const TECHNICAL_ROLES = new Set([
+  'backend', 'frontend', 'backend-developer', 'frontend-developer',
+  'database-developer', 'data-engineer', 'qa-engineer', 'devops-engineer',
+  'cloud-architect', 'security-engineer', 'machine-learning-engineer',
+]);
+
+function isTechnicalRole(roleStr) {
+  if (!roleStr || typeof roleStr !== 'string') return true;
+  const normalized = roleStr.trim().toLowerCase().replace(/\s+/g, '-');
+  return TECHNICAL_ROLES.has(normalized);
+}
+
 function loadLocalEmployees() {
   try {
     if (fs.existsSync(LOCAL_STORE_PATH)) {
@@ -47,8 +59,7 @@ function generateNextEmployeeId(employees) {
 }
 
 function generateWorkEmail(name) {
-  const firstName = (name || '').trim().split(' ')[0] || 'user';
-  const cleaned = firstName.toLowerCase().replace(/[^a-z0-9._-]/g, '').replace(/^[._-]+/, '');
+  const cleaned = (name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const domain = (process.env.ZOHO_WORKPLACE_DOMAIN || 'nigmafest.in').toLowerCase();
   return `${cleaned || 'user'}@${domain}`;
 }
@@ -102,7 +113,7 @@ async function getAllEmployees() {
 }
 
 
-async function createEmployee({ name, email, role, joiningDate, department }) {
+async function createEmployee({ name, email, role, joiningDate, department, designation }) {
   if (!name || !email || !role) {
     throw new Error('Name, email, and role are required');
   }
@@ -138,25 +149,50 @@ async function createEmployee({ name, email, role, joiningDate, department }) {
     employee_id,
     name: name.trim(),
     email: workEmail,
+    work_email: workEmail,
     personal_email: personalEmail,
+    designation: (designation || role).trim(),
     role: role.trim(),
     department: department ? department.trim() : 'Engineering',
     joining_date: joiningDate || new Date().toISOString().split('T')[0],
     initials,
     status: 'Provisioning',
+    zoho_zuid: null,
+    zoho_account_id: null,
+    slack_user_id: null,
+    slack_channel_id: null,
+    github_invitation_id: null,
+    github_username: null,
+    jira_account_id: null,
+    platform_status: { zoho: 'Pending', slack: 'Pending', github: 'Pending', jira: 'Pending' },
     created_at: new Date().toISOString(),
   };
 
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
-      const { personal_email, ...supabasePayload } = newEmployee;
-      const { data, error } = await supabase.from('employees').insert([supabasePayload]).select();
+      const {
+        work_email,
+        personal_email,
+        designation,
+        zoho_zuid,
+        zoho_account_id,
+        slack_user_id,
+        slack_channel_id,
+        github_invitation_id,
+        github_username,
+        jira_account_id,
+        platform_status,
+        ...corePayload
+      } = newEmployee;
+
+      const { data, error } = await supabase.from('employees').insert([corePayload]).select();
       if (!error && data && data.length > 0) {
+        const fullRecord = { ...newEmployee, ...data[0] };
         const local = loadLocalEmployees();
-        local.unshift(data[0]);
+        local.unshift(fullRecord);
         saveLocalEmployees(local);
-        return data[0];
+        return fullRecord;
       } else if (error) {
         console.warn('Supabase insert warning/error:', error.message);
       }
@@ -171,19 +207,23 @@ async function createEmployee({ name, email, role, joiningDate, department }) {
   return newEmployee;
 }
 
-async function updateEmployeeStatus(identifier, status) {
+async function updateEmployeeStatus(identifier, status, extraFields = {}) {
   if (!identifier || !status) return null;
-  const completedAt = status.toLowerCase() === 'active' || status.toLowerCase() === 'completed' ? new Date().toISOString() : null;
+  const statusLower = status.toLowerCase();
+  const completedAt = statusLower === 'active' || statusLower === 'completed' ? new Date().toISOString() : null;
+  const offboardedAt = statusLower === 'offboarded' ? new Date().toISOString() : null;
+
+  const updateData = { status, ...extraFields };
+  if (completedAt) updateData.completed_at = completedAt;
+  if (offboardedAt) updateData.offboarded_at = offboardedAt;
 
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
-      const updateData = { status };
-      if (completedAt) updateData.completed_at = completedAt;
       await supabase
         .from('employees')
         .update(updateData)
-        .or(`employee_id.eq.${identifier},email.eq.${identifier}`);
+        .or(`employee_id.eq.${identifier},email.eq.${identifier},work_email.eq.${identifier}`);
     } catch (e) {
       // ignore
     }
@@ -191,11 +231,10 @@ async function updateEmployeeStatus(identifier, status) {
 
   const local = loadLocalEmployees();
   const index = local.findIndex(
-    (e) => e.employee_id === identifier || e.email === identifier
+    (e) => e.employee_id === identifier || e.email === identifier || e.work_email === identifier
   );
   if (index !== -1) {
-    local[index].status = status;
-    if (completedAt) local[index].completed_at = completedAt;
+    local[index] = { ...local[index], ...updateData };
     saveLocalEmployees(local);
     return local[index];
   }
@@ -366,19 +405,22 @@ async function getLogs() {
     if (statusLower === 'active' || statusLower === 'completed') {
       const completedTime = emp.completed_at || createdTime;
       const formattedCompletedTime = completedTime.replace('T', ' ').substring(0, 19);
+      const isTech = isTechnicalRole(emp.classified_role || emp.role);
 
       logs.push({
         id: `external-access-${emp.employee_id || emp.email}`,
         time: formattedCompletedTime,
         rawTimestamp: (new Date(completedTime).getTime() || Date.now()) + 2000,
         icon: '✓',
-        event: 'GitHub & Jira Access Dispatched',
+        event: isTech
+          ? 'GitHub & Jira Access Dispatched'
+          : 'Jira Access Dispatched (GitHub skipped for non-technical role)',
         user: emp.email,
         initials,
         admin: 'Password Watcher',
         status: 'Success',
         action: 'Logs',
-        app: 'GitHub Enterprise',
+        app: isTech ? 'GitHub Enterprise' : 'Jira Software',
       });
     }
   }

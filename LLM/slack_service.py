@@ -74,3 +74,20 @@ def add_user_to_channel(slack: WebClient, user_id: str, channel_name: str) -> st
         if error.response["error"] == "already_in_channel":
             return f"User is already in #{validate_channel_name(channel_name)}"
         raise
+
+
+def remove_user_from_channels(slack: WebClient, user_id: str) -> bool:
+    """Remove user from all public and private channels managed by the app."""
+    try:
+        for channel_type in ("public_channel", "private_channel"):
+            for channel in _channels(slack, channel_type):
+                channel_id = channel["id"]
+                try:
+                    slack.conversations_kick(channel=channel_id, user=user_id)
+                except SlackApiError as error:
+                    # Ignore if user wasn't in channel or bot lacks permission
+                    pass
+        return True
+    except Exception as err:
+        return False
+

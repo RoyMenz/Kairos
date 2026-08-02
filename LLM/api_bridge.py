@@ -7,7 +7,9 @@ import contextlib
 from config import load_settings
 from role_router import choose_workspace_role, choose_channel
 from app import provision_workspace_account, start_onboarding, release_password_changed_onboarding
-from external_access import start_external_onboarding
+from external_access import start_external_onboarding, remove_from_github, revoke_jira_access
+from workspace_service import create_work_account, disable_work_account, find_work_account, make_local_part
+from slack_service import remove_user_from_channels, find_user_id, WebClient
 from pending_store import load_pending
 
 
@@ -43,14 +45,20 @@ def main():
             last_name = sys.argv[4]
             designation = sys.argv[5]
             buf = io.StringIO()
+            zuid = ""
+            account_id = ""
             with contextlib.redirect_stdout(buf):
                 provision_workspace_account(personal_email, first_name, last_name, designation)
             output = buf.getvalue().strip()
-            from workspace_service import make_local_part
             domain = os.environ.get("ZOHO_WORKPLACE_DOMAIN", "nigmafest.in").lower()
             work_email = f"{make_local_part(first_name, last_name)}@{domain}"
-            print(json.dumps({"success": True, "work_email": work_email, "output": output}))
-
+            org_id = os.environ.get("ZOHO_ORGANIZATION_ID")
+            if org_id:
+                acct = find_work_account(org_id, work_email)
+                if acct:
+                    zuid = str(acct.get("zuid", ""))
+                    account_id = str(acct.get("accountId", acct.get("id", "")))
+            print(json.dumps({"success": True, "work_email": work_email, "zoho_zuid": zuid, "zoho_account_id": account_id, "output": output}))
 
         elif action == "onboard":
             if len(sys.argv) < 4:
@@ -71,9 +79,51 @@ def main():
             role = sys.argv[3]
             buf = io.StringIO()
             with contextlib.redirect_stdout(buf):
-                start_external_onboarding(work_email, role)
+                technical, jira_required, github_invitation_id, jira_account_id = start_external_onboarding(work_email, role)
             output = buf.getvalue().strip()
-            print(json.dumps({"success": True, "output": output}))
+            print(json.dumps({
+                "success": True,
+                "technical": technical,
+                "jira_required": jira_required,
+                "github_invitation_id": github_invitation_id,
+                "jira_account_id": jira_account_id,
+                "output": output
+            }))
+
+        elif action == "disable-zoho":
+            if len(sys.argv) < 3:
+                raise ValueError("work_email required")
+            work_email = sys.argv[2]
+            result = disable_work_account(work_email)
+            print(json.dumps({"success": True, "disabled": result}))
+
+        elif action == "remove-github":
+            if len(sys.argv) < 3:
+                raise ValueError("username_or_email required")
+            username_or_email = sys.argv[2]
+            invitation_id = sys.argv[3] if len(sys.argv) >= 4 else ""
+            result = remove_from_github(username_or_email, invitation_id)
+            print(json.dumps({"success": True, "removed": result}))
+
+        elif action == "revoke-jira":
+            if len(sys.argv) < 3:
+                raise ValueError("account_id_or_email required")
+            account_id_or_email = sys.argv[2]
+            result = revoke_jira_access(account_id_or_email)
+            print(json.dumps({"success": True, "revoked": result}))
+
+        elif action == "remove-slack-user":
+            if len(sys.argv) < 3:
+                raise ValueError("user_id or email required")
+            target = sys.argv[2]
+            token = os.environ.get("SLACK_BOT_TOKEN")
+            removed = False
+            if token:
+                slack = WebClient(token=token)
+                user_id = target if not "@" in target else find_user_id(slack, target)
+                if user_id:
+                    removed = remove_user_from_channels(slack, user_id)
+            print(json.dumps({"success": True, "removed": removed}))
 
         elif action == "get-pending":
             pending = load_pending()

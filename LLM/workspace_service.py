@@ -7,15 +7,14 @@ import secrets
 import string
 import threading
 import time
+import json
+import tempfile
+from pathlib import Path
 
 import requests
 
 from config import require_settings
 
-
-import json
-import tempfile
-from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
 LOCAL_PART = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
@@ -88,7 +87,6 @@ def _access_token() -> str:
         return _ACCESS_TOKEN
 
 
-
 def _request(method: str, path: str, **kwargs) -> requests.Response:
     response = requests.request(
         method,
@@ -118,11 +116,7 @@ def generate_temporary_password() -> str:
 
 
 def find_work_account(organization_id: str, email: str) -> dict | None:
-    """Return an organization account by email, or None if it is not present.
-
-    Zoho's email-specific endpoint responds with a 400 for an unknown address,
-    so use the documented organization list endpoint for reliable lookups.
-    """
+    """Return an organization account by email, or None if it is not present."""
     response = _request(
         "GET", f"/api/organization/{organization_id}/accounts", params={"start": 0, "limit": 200}
     )
@@ -139,15 +133,18 @@ def _user_exists(organization_id: str, email: str) -> bool:
     return find_work_account(organization_id, email) is not None
 
 
-def create_work_account(first_name: str, last_name: str, role: str) -> tuple[str, str]:
+def create_work_account(first_name: str, last_name: str, role: str) -> tuple[str, str, str, str]:
     """Create a Zoho Workplace account requiring a password change at first login."""
     require_settings("ZOHO_ORGANIZATION_ID", "ZOHO_WORKPLACE_DOMAIN")
     local_part = make_local_part(first_name, last_name)
     work_email = f"{local_part}@{os.environ['ZOHO_WORKPLACE_DOMAIN'].lower()}"
     organization_id = os.environ["ZOHO_ORGANIZATION_ID"]
-    if _user_exists(organization_id, work_email):
+    existing = find_work_account(organization_id, work_email)
+    if existing:
+        zuid = str(existing.get("zuid", ""))
+        account_id = str(existing.get("accountId", existing.get("id", "")))
         raise RuntimeError(
-            f"{work_email} already exists in Zoho Workplace. "
+            f"{work_email} already exists in Zoho Workplace (zuid: {zuid}). "
             "No activation email was sent because its temporary password is unknown."
         )
 
@@ -167,5 +164,45 @@ def create_work_account(first_name: str, last_name: str, role: str) -> tuple[str
     )
     if not response.ok:
         raise RuntimeError(f"Could not create {work_email} in Zoho Workplace: {response.text}")
-    LOGGER.info("Created Zoho Workplace account %s with classified role %s", work_email, role)
-    return work_email, temporary_password
+    
+    zuid = ""
+    account_id = ""
+    try:
+        data = response.json().get("data", {})
+        zuid = str(data.get("zuid", ""))
+        account_id = str(data.get("accountId", data.get("id", "")))
+    except Exception:
+        pass
+
+    if not zuid:
+        acct = find_work_account(organization_id, work_email)
+        if acct:
+            zuid = str(acct.get("zuid", ""))
+            account_id = str(acct.get("accountId", acct.get("id", "")))
+
+    LOGGER.info("Created Zoho Workplace account %s (zuid: %s) with classified role %s", work_email, zuid, role)
+    return work_email, temporary_password, zuid, account_id
+
+
+def disable_work_account(work_email: str) -> bool:
+    """Disable/suspend a Zoho Workplace account during employee offboarding."""
+    require_settings("ZOHO_ORGANIZATION_ID")
+    organization_id = os.environ["ZOHO_ORGANIZATION_ID"]
+    account = find_work_account(organization_id, work_email)
+    if not account:
+        LOGGER.warning("Zoho account for %s not found during offboarding.", work_email)
+        return False
+    account_id = account.get("accountId", account.get("id"))
+    if not account_id:
+        LOGGER.warning("Zoho account ID missing for %s.", work_email)
+        return False
+    response = _request(
+        "PUT",
+        f"/api/organization/{organization_id}/accounts/{account_id}",
+        json={"accountStatus": "disabled"},
+    )
+    if response.ok:
+        LOGGER.info("Disabled Zoho account for %s", work_email)
+        return True
+    LOGGER.warning("Could not disable Zoho account for %s: %s", work_email, response.text)
+    return False

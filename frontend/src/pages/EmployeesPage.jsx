@@ -4,6 +4,9 @@ function EmployeesPage() {
   const [employeeList, setEmployeeList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [offboardConfirm, setOffboardConfirm] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     document.title = 'Employees Directory | PeopleFlow';
@@ -30,6 +33,66 @@ function EmployeesPage() {
     }
   }
 
+  async function retryProvisioning(employee, platform = 'all') {
+    const empId = employee.employee_id || employee.email;
+    setActionLoading(true);
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      let response;
+      try {
+        response = await fetch(`/api/employees/${encodeURIComponent(empId)}/retry`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platform }),
+        });
+      } catch (e) {
+        response = await fetch(`${backendUrl}/api/employees/${encodeURIComponent(empId)}/retry`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platform }),
+        });
+      }
+      const data = await response.json();
+      if (response.ok) {
+        setNotice(data.message || 'Retry executed successfully');
+        await fetchEmployees();
+      }
+    } catch (err) {
+      console.error('Failed to retry provisioning:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function executeOffboarding(employee) {
+    const empId = employee.employee_id || employee.email;
+    setActionLoading(true);
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      let response;
+      try {
+        response = await fetch(`/api/employees/${encodeURIComponent(empId)}/offboard`, {
+          method: 'POST',
+        });
+      } catch (e) {
+        response = await fetch(`${backendUrl}/api/employees/${encodeURIComponent(empId)}/offboard`, {
+          method: 'POST',
+        });
+      }
+      const data = await response.json();
+      if (response.ok) {
+        setNotice(data.message || 'Employee offboarded successfully');
+        setOffboardConfirm(null);
+        setSelectedEmployee(null);
+        await fetchEmployees();
+      }
+    } catch (err) {
+      console.error('Offboarding failed:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   async function deleteEmployee(employee) {
     const empId = employee.employee_id || employee.email;
     if (window.confirm(`Delete ${employee.name} (${empId})? This action cannot be undone.`)) {
@@ -53,7 +116,7 @@ function EmployeesPage() {
         <section className="directory-heading">
           <div>
             <h1>Employee Directory</h1>
-            <p>Manage identity provisioning and organizational structure.</p>
+            <p>Manage identity provisioning, platform access, and offboarding workflows.</p>
           </div>
           <div className="directory-actions">
             <button
@@ -66,6 +129,13 @@ function EmployeesPage() {
           </div>
         </section>
 
+        {notice && (
+          <div style={{ margin: '0 0 16px 0', padding: '12px 16px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', color: '#1e40af', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{notice}</span>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => setNotice('')}>×</button>
+          </div>
+        )}
+
         <section className="employee-table-card">
           <div className="table-scroll">
             <table>
@@ -75,93 +145,106 @@ function EmployeesPage() {
                   <th>Employee</th>
                   <th>Department</th>
                   <th>Role</th>
+                  <th>Platform Status</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {employeeList.map((employee) => (
-                  <tr key={employee.employee_id || employee.email}>
-                    <td>
-                      <span
-                        style={{
-                          fontWeight: '700',
-                          fontFamily: 'monospace',
-                          color: '#2563eb',
-                          backgroundColor: '#eff6ff',
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                        }}
-                      >
-                        {employee.employee_id || 'KS001'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="employee-cell">
-                        <div className="table-avatar">
-                          {employee.initials ||
-                            employee.name
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')
-                              .toUpperCase()}
-                        </div>
-                        <div>
-                          <strong>{employee.name}</strong>
-                          <span>{employee.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>{employee.department || 'Engineering'}</td>
-                    <td>{employee.role}</td>
-                    <td>
-                      <span
-                        className={`status status--${(employee.status || 'Active').toLowerCase()}`}
-                      >
-                        {employee.status || 'Active'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="row-actions">
-                        <button
-                          className="view-action"
-                          title="View profile"
-                          aria-label={`View ${employee.name}'s profile`}
-                          onClick={() => setSelectedEmployee(employee)}
+                {employeeList.map((employee) => {
+                  const statusLower = (employee.status || 'Active').toLowerCase();
+                  return (
+                    <tr key={employee.employee_id || employee.email}>
+                      <td>
+                        <span
+                          style={{
+                            fontWeight: '700',
+                            fontFamily: 'monospace',
+                            color: '#2563eb',
+                            backgroundColor: '#eff6ff',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                          }}
                         >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                          {employee.employee_id || 'KS001'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="employee-cell">
+                          <div className="table-avatar">
+                            {employee.initials ||
+                              employee.name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')
+                                .toUpperCase()}
+                          </div>
+                          <div>
+                            <strong>{employee.name}</strong>
+                            <span>{employee.work_email || employee.email}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{employee.department || 'Engineering'}</td>
+                      <td>{employee.role}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: '#f3f4f6', color: '#374151' }}>
+                            Zoho: {employee.zoho_zuid ? '✓' : '…'}
+                          </span>
+                          <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: '#f3f4f6', color: '#374151' }}>
+                            Slack: {employee.slack_user_id ? '✓' : '…'}
+                          </span>
+                          <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: '#f3f4f6', color: '#374151' }}>
+                            GH: {employee.github_username ? '✓' : employee.github_invitation_id ? 'Inv' : '…'}
+                          </span>
+                          <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: '#f3f4f6', color: '#374151' }}>
+                            Jira: {employee.jira_account_id ? '✓' : '…'}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`status status--${statusLower}`}>
+                          {employee.status || 'Active'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="row-actions" style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            className="view-action"
+                            title="View profile & platform IDs"
+                            onClick={() => setSelectedEmployee(employee)}
                           >
-                            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
-                            <circle cx="12" cy="12" r="2.5" />
-                          </svg>
-                        </button>
-                        <button
-                          className="delete-action"
-                          title="Delete employee"
-                          aria-label={`Delete ${employee.name}`}
-                          onClick={() => deleteEmployee(employee)}
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                              <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                              <circle cx="12" cy="12" r="2.5" />
+                            </svg>
+                          </button>
+
+                          {statusLower !== 'offboarded' && (
+                            <button
+                              style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
+                              title="Offboard employee"
+                              onClick={() => setOffboardConfirm(employee)}
+                            >
+                              Offboard
+                            </button>
+                          )}
+
+                          <button
+                            className="delete-action"
+                            title="Delete employee record"
+                            onClick={() => deleteEmployee(employee)}
                           >
-                            <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                              <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             {loading && (
@@ -176,101 +259,110 @@ function EmployeesPage() {
               </div>
             )}
           </div>
-          <div className="pagination">
-            <p>Showing {employeeList.length} registered employees</p>
-            <div>
-              <button disabled>‹</button>
-              <button className="current">1</button>
-              <button disabled>›</button>
-            </div>
-          </div>
         </section>
 
-        <footer className="directory-footer">© 2026 PeopleFlow · Enterprise HR Design System</footer>
+        <footer className="directory-footer">© 2026 Kairos · Multi-Platform HR Identity Lifecycle Engine</footer>
       </main>
 
+      {/* Profile Modal */}
       {selectedEmployee && (
-        <div
-          className="profile-modal-backdrop"
-          role="presentation"
-          onMouseDown={() => setSelectedEmployee(null)}
-        >
-          <section
-            className="profile-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="employee-profile-title"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
+        <div className="profile-modal-backdrop" role="presentation" onMouseDown={() => setSelectedEmployee(null)}>
+          <section className="profile-modal" role="dialog" onMouseDown={(e) => e.stopPropagation()}>
             <header>
               <div className="profile-modal-avatar">
-                {selectedEmployee.initials ||
-                  selectedEmployee.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .toUpperCase()}
+                {selectedEmployee.initials || selectedEmployee.name.split(' ').map((n) => n[0]).join('').toUpperCase()}
               </div>
               <div>
-                <span>Employee Profile</span>
-                <h2 id="employee-profile-title">{selectedEmployee.name}</h2>
+                <span>Employee Profile &amp; Asset Status</span>
+                <h2>{selectedEmployee.name}</h2>
                 <p>{selectedEmployee.role}</p>
               </div>
-              <button
-                className="profile-close"
-                onClick={() => setSelectedEmployee(null)}
-                aria-label="Close profile"
-              >
-                ×
-              </button>
+              <button className="profile-close" onClick={() => setSelectedEmployee(null)}>×</button>
             </header>
+
             <div className="profile-status-row">
-              <span
-                className={`status status--${(selectedEmployee.status || 'Active').toLowerCase()}`}
-              >
+              <span className={`status status--${(selectedEmployee.status || 'Active').toLowerCase()}`}>
                 {selectedEmployee.status || 'Active'}
               </span>
-              <small>Identity verified</small>
+              <button
+                disabled={actionLoading}
+                style={{ background: '#f3f4f6', border: '1px solid #d1d5db', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                onClick={() => retryProvisioning(selectedEmployee)}
+              >
+                ↻ Retry Provisioning
+              </button>
             </div>
+
             <div className="profile-details">
               <article>
                 <span>Work Email</span>
-                <strong>{selectedEmployee.email}</strong>
+                <strong>{selectedEmployee.work_email || selectedEmployee.email}</strong>
               </article>
               <article>
-                <span>Department</span>
-                <strong>{selectedEmployee.department || 'Engineering'}</strong>
+                <span>Personal Email</span>
+                <strong>{selectedEmployee.personal_email || 'N/A'}</strong>
               </article>
               <article>
-                <span>Role</span>
-                <strong>{selectedEmployee.role}</strong>
+                <span>Zoho ZUID</span>
+                <strong style={{ fontFamily: 'monospace' }}>{selectedEmployee.zoho_zuid || 'Pending'}</strong>
               </article>
               <article>
-                <span>Employee ID</span>
-                <strong style={{ color: '#2563eb', fontFamily: 'monospace' }}>
-                  {selectedEmployee.employee_id || selectedEmployee.employeeId || 'KS001'}
-                </strong>
+                <span>Slack User ID</span>
+                <strong style={{ fontFamily: 'monospace' }}>{selectedEmployee.slack_user_id || 'Pending'}</strong>
+              </article>
+              <article>
+                <span>GitHub Username</span>
+                <strong style={{ fontFamily: 'monospace' }}>{selectedEmployee.github_username || selectedEmployee.github_invitation_id || 'Pending'}</strong>
+              </article>
+              <article>
+                <span>Jira Account ID</span>
+                <strong style={{ fontFamily: 'monospace' }}>{selectedEmployee.jira_account_id || 'Pending'}</strong>
               </article>
             </div>
-            <div className="profile-access">
-              <div>
-                <span>Access &amp; Provisioning</span>
-                <strong>
-                  {selectedEmployee.status === 'Provisioning'
-                    ? 'Setup in progress'
-                    : 'Workspace access enabled'}
-                </strong>
-              </div>
-              <div className="profile-progress">
-                <i
-                  style={{
-                    width: selectedEmployee.status === 'Provisioning' ? '68%' : '100%',
-                  }}
-                />
-              </div>
-            </div>
+
             <footer>
               <button onClick={() => setSelectedEmployee(null)}>Close</button>
+            </footer>
+          </section>
+        </div>
+      )}
+
+      {/* Offboarding Confirmation Modal */}
+      {offboardConfirm && (
+        <div className="profile-modal-backdrop" role="presentation" onMouseDown={() => setOffboardConfirm(null)}>
+          <section className="profile-modal" style={{ maxWidth: '480px' }} onMouseDown={(e) => e.stopPropagation()}>
+            <header>
+              <div>
+                <span style={{ color: '#dc2626', fontWeight: 'bold' }}>⚠️ Offboarding Confirmation</span>
+                <h2>Offboard {offboardConfirm.name}?</h2>
+              </div>
+              <button className="profile-close" onClick={() => setOffboardConfirm(null)}>×</button>
+            </header>
+
+            <div style={{ padding: '16px 0', fontSize: '14px', lineHeight: '1.5', color: '#374151' }}>
+              <p>Executing offboarding will perform the following actions:</p>
+              <ul style={{ margin: '8px 0 16px 20px', padding: 0 }}>
+                <li>Disable Zoho Workplace account and mailbox access.</li>
+                <li>Remove user from GitHub Organization / cancel active invitation.</li>
+                <li>Revoke access in Jira Software.</li>
+                <li>Remove user from all managed Slack channels.</li>
+              </ul>
+              <div style={{ background: '#fffbe6', border: '1px solid #ffe58f', padding: '10px 12px', borderRadius: '6px', fontSize: '12px', color: '#873800' }}>
+                <strong>Slack Plan Note:</strong> On non-Enterprise Slack plans, backend removes users from channels. A Slack Workspace Owner must deactivate the Slack user account manually in Slack Admin Console.
+              </div>
+            </div>
+
+            <footer style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button style={{ background: '#f3f4f6', border: '1px solid #d1d5db', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setOffboardConfirm(null)}>
+                Cancel
+              </button>
+              <button
+                disabled={actionLoading}
+                style={{ background: '#dc2626', color: '#ffffff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                onClick={() => executeOffboarding(offboardConfirm)}
+              >
+                {actionLoading ? 'Offboarding...' : 'Confirm Offboarding'}
+              </button>
             </footer>
           </section>
         </div>

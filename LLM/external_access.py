@@ -156,11 +156,116 @@ def invite_to_github(work_email: str, role: str) -> None:
     team_data = team.json()
     requests.put(f"https://api.github.com/orgs/{org}/teams/{team_data['slug']}/repos/{org}/{policy['github_repo']}", headers=headers, json={"permission": "push"}, timeout=20).raise_for_status()
     invitation = requests.post(f"https://api.github.com/orgs/{org}/invitations", headers=headers, json={"email": work_email, "role": "direct_member", "team_ids": [team_data["id"]]}, timeout=20)
+
+
+def _jira_headers() -> tuple[dict[str, str], HTTPBasicAuth]:
+    require_settings("JIRA_BASE_URL", "JIRA_ADMIN_EMAIL", "JIRA_API_TOKEN")
+    return ({"Accept": "application/json", "Content-Type": "application/json"}, HTTPBasicAuth(os.environ["JIRA_ADMIN_EMAIL"], os.environ["JIRA_API_TOKEN"]))
+
+
+def _ensure_jira_project_and_group(role: str) -> tuple[str, str]:
+    """Create the role project/group once and bind the group to Developers."""
+    policy = role_resources(role)
+    base = os.environ["JIRA_BASE_URL"].rstrip("/")
+    headers, auth = _jira_headers()
+    group_name = f"kairos-{role}-developers"
+    project = requests.get(f"{base}/rest/api/3/project/{policy['jira_key']}", headers=headers, auth=auth, timeout=20)
+    if project.status_code == 404:
+        myself = requests.get(f"{base}/rest/api/3/myself", headers=headers, auth=auth, timeout=20)
+        myself.raise_for_status()
+        project = requests.post(
+            f"{base}/rest/api/3/project", headers=headers, auth=auth, timeout=20,
+            json={"key": policy["jira_key"], "name": policy["jira_project"], "projectTypeKey": "software", "projectTemplateKey": "com.pyxis.greenhopper.jira:gh-simplified-agility-kanban", "leadAccountId": myself.json()["accountId"]},
+        )
+    project.raise_for_status()
+    group = requests.post(f"{base}/rest/api/3/group", headers=headers, auth=auth, timeout=20, json={"name": group_name})
+    if group.status_code not in {200, 201, 400}:
+        group.raise_for_status()
+    roles = requests.get(f"{base}/rest/api/3/project/{policy['jira_key']}/role", headers=headers, auth=auth, timeout=20)
+    roles.raise_for_status()
+    developer_url = roles.json().get("Developers") or roles.json().get("Member")
+    if not developer_url:
+        created_role = requests.post(
+            f"{base}/rest/api/3/role", headers=headers, auth=auth, timeout=20,
+            json={"name": "Developers", "description": "Kairos role-based developer access"},
+        )
+        if created_role.status_code not in {200, 201, 400}:
+            created_role.raise_for_status()
+        roles = requests.get(f"{base}/rest/api/3/project/{policy['jira_key']}/role", headers=headers, auth=auth, timeout=20)
+        roles.raise_for_status()
+        developer_url = roles.json().get("Developers") or roles.json().get("Member")
+    if not developer_url:
+        raise RuntimeError(f"Jira project {policy['jira_key']} has no Developers or Member role after setup.")
+    assignment = requests.post(developer_url, headers=headers, auth=auth, timeout=20, json={"group": [group_name]})
+    if assignment.status_code not in {200, 201, 400, 409}:
+        assignment.raise_for_status()
+    return group_name, developer_url
+
+
+def _github_headers() -> dict[str, str]:
+    require_settings("GITHUB_APP_ID", "GITHUB_APP_INSTALLATION_ID", "GITHUB_APP_PRIVATE_KEY_FILE")
+    now = int(time.time())
+    key_file = resolve_file_path(os.environ["GITHUB_APP_PRIVATE_KEY_FILE"])
+    private_key = open(key_file, encoding="utf-8").read()
+    app_jwt = jwt.encode({"iat": now - 60, "exp": now + 540, "iss": os.environ["GITHUB_APP_ID"]}, private_key, algorithm="RS256")
+    token_response = requests.post(
+        f"https://api.github.com/app/installations/{os.environ['GITHUB_APP_INSTALLATION_ID']}/access_tokens",
+        headers={"Authorization": f"Bearer {app_jwt}", "Accept": "application/vnd.github+json"}, timeout=20,
+    )
+    token_response.raise_for_status()
+    return {"Authorization": f"Bearer {token_response.json()['token']}", "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
+
+
+def invite_to_github(work_email: str, role: str) -> str | None:
+    require_settings("GITHUB_ORG")
+    policy = role_resources(role)
+    headers = _github_headers()
+    org = os.environ["GITHUB_ORG"]
+    repo_url = f"https://api.github.com/repos/{org}/{policy['github_repo']}"
+    response = requests.get(repo_url, headers=headers, timeout=20)
+    if response.status_code == 404:
+        response = requests.post(f"https://api.github.com/orgs/{org}/repos", headers=headers, json={"name": policy["github_repo"], "private": True}, timeout=20)
+    response.raise_for_status()
+    team_url = f"https://api.github.com/orgs/{org}/teams/{policy['github_team']}"
+    team = requests.get(team_url, headers=headers, timeout=20)
+    if team.status_code == 404:
+        team = requests.post(f"https://api.github.com/orgs/{org}/teams", headers=headers, json={"name": policy["github_team"], "privacy": "closed"}, timeout=20)
+    team.raise_for_status()
+    team_data = team.json()
+    requests.put(f"https://api.github.com/orgs/{org}/teams/{team_data['slug']}/repos/{org}/{policy['github_repo']}", headers=headers, json={"permission": "push"}, timeout=20).raise_for_status()
+    invitation = requests.post(f"https://api.github.com/orgs/{org}/invitations", headers=headers, json={"email": work_email, "role": "direct_member", "team_ids": [team_data["id"]]}, timeout=20)
     if invitation.status_code not in {201, 422}:
         invitation.raise_for_status()
+    invitation_id = None
+    if invitation.status_code == 201:
+        invitation_id = str(invitation.json().get("id", ""))
+    return invitation_id
 
 
-def invite_to_jira(work_email: str, role: str) -> None:
+def remove_from_github(username_or_email: str, invitation_id: str = "") -> bool:
+    """Remove user or cancel invitation from GitHub Organization."""
+    try:
+        require_settings("GITHUB_ORG")
+        headers = _github_headers()
+        org = os.environ["GITHUB_ORG"]
+        if invitation_id:
+            res = requests.delete(f"https://api.github.com/orgs/{org}/invitations/{invitation_id}", headers=headers, timeout=20)
+            if res.ok:
+                LOGGER.info("Cancelled GitHub invitation %s", invitation_id)
+                return True
+        if username_or_email and not "@" in username_or_email:
+            res = requests.delete(f"https://api.github.com/orgs/{org}/members/{username_or_email}", headers=headers, timeout=20)
+            if res.ok:
+                LOGGER.info("Removed %s from GitHub org %s", username_or_email, org)
+                return True
+        LOGGER.info("GitHub removal attempted for %s", username_or_email)
+        return True
+    except Exception as err:
+        LOGGER.warning("GitHub removal warning: %s", err)
+        return False
+
+
+def invite_to_jira(work_email: str, role: str) -> str | None:
     base = os.environ["JIRA_BASE_URL"].rstrip("/")
     headers, auth = _jira_headers()
     response = requests.post(
@@ -184,6 +289,35 @@ def invite_to_jira(work_email: str, role: str) -> None:
             f"Status: {response.status_code}\n"
             f"Response: {response.text}"
         )
+    return get_jira_account_id_by_email(work_email)
+
+
+def revoke_jira_access(account_id_or_email: str) -> bool:
+    """Revoke user access in Jira Software."""
+    try:
+        base = os.environ["JIRA_BASE_URL"].rstrip("/")
+        headers, auth = _jira_headers()
+        account_id = account_id_or_email
+        if "@" in account_id_or_email:
+            account_id = get_jira_account_id_by_email(account_id_or_email)
+        if not account_id:
+            LOGGER.warning("Jira account ID not found for %s", account_id_or_email)
+            return False
+        response = requests.delete(
+            f"{base}/rest/api/3/user",
+            params={"accountId": account_id},
+            headers=headers,
+            auth=auth,
+            timeout=20,
+        )
+        if response.status_code in (200, 204, 404):
+            LOGGER.info("Revoked Jira access for account %s", account_id)
+            return True
+        LOGGER.warning("Jira revocation returned status %s: %s", response.status_code, response.text)
+        return False
+    except Exception as err:
+        LOGGER.warning("Jira access revocation warning: %s", err)
+        return False
 
 
 def get_jira_account_id_by_email(work_email: str) -> str | None:
@@ -259,17 +393,23 @@ def assign_user_to_kairos_project(work_email: str, employee_role: str = "") -> b
     return True
 
 
-def start_external_onboarding(work_email: str, role: str) -> tuple[bool, bool]:
+def start_external_onboarding(work_email: str, role: str) -> tuple[bool, bool, str, str]:
     """Provision GitHub for technical roles and Jira for technical/collaboration roles."""
     technical = is_technical_platform_role(role)
     jira_required = technical or is_jira_collaboration_role(role)
+    github_invitation_id = ""
+    jira_account_id = ""
     if technical:
-        invite_to_github(work_email, role)
+        gh_id = invite_to_github(work_email, role)
+        if gh_id:
+            github_invitation_id = str(gh_id)
     else:
         LOGGER.info("%s: skipping GitHub for nontechnical role %s.", work_email, role)
     if jira_required:
-        invite_to_jira(work_email, role)
+        j_id = invite_to_jira(work_email, role)
+        if j_id:
+            jira_account_id = str(j_id)
         assign_user_to_kairos_project(work_email, role)
     else:
         LOGGER.info("%s: skipping Jira for role %s.", work_email, role)
-    return technical, jira_required
+    return technical, jira_required, github_invitation_id, jira_account_id

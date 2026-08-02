@@ -130,4 +130,27 @@ test('POST /api/onboarding/check-activation triggers activation check', async ()
   assert.ok(data.message.includes('Password activation check executed'));
 });
 
+test('POST /api/onboarding/external classifies technical vs non-technical role flags', async () => {
+  const techRes = await fetch(`${baseUrl}/api/onboarding/external`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ workEmail: 'test_tech@nigmafest.in', role: 'backend' }),
+  });
+  assert.equal(techRes.status, 200);
+  const techData = await techRes.json();
+  assert.equal(techData.success, true);
+  assert.equal(techData.technical, true);
+
+  const nonTechRes = await fetch(`${baseUrl}/api/onboarding/external`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ workEmail: 'test_nontech@nigmafest.in', role: 'hr-manager' }),
+  });
+  assert.equal(nonTechRes.status, 200);
+  const nonTechData = await nonTechRes.json();
+  assert.equal(nonTechData.success, true);
+  assert.equal(nonTechData.technical, false);
+});
+
+
 
