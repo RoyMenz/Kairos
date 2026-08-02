@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiFetch } from '../api.js';
 
 function Icon({ name, size = 20 }) {
   const paths = {
@@ -26,27 +27,10 @@ function LoginPage() {
     setErrorMessage('');
 
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-      let response;
-      try {
-        response = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), password }),
-        });
-      } catch (fetchErr) {
-        response = await fetch(`${backendUrl}/api/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), password }),
-        });
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Invalid work email or password');
-      }
+      const data = await apiFetch('/api/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
 
       if (data.session?.access_token) {
         localStorage.setItem('kairos_access_token', data.session.access_token);

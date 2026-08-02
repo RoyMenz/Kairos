@@ -5,7 +5,7 @@ import io
 import contextlib
 
 from config import load_settings
-from role_router import choose_workspace_role, choose_channel
+from role_router import choose_workspace_role, choose_channel, revise_access_suggestion, suggest_access
 from app import provision_workspace_account, start_onboarding, release_password_changed_onboarding
 from external_access import start_external_onboarding, remove_from_github, revoke_jira_access
 from workspace_service import create_work_account, disable_work_account, find_work_account, make_local_part
@@ -36,6 +36,18 @@ def main():
             channels = set(json.loads(sys.argv[3])) if len(sys.argv) >= 4 and sys.argv[3] else set()
             channel = choose_channel(designation, channels)
             print(json.dumps({"success": True, "designation": designation, "channel": channel}))
+
+        elif action == "suggest-access":
+            if len(sys.argv) < 3:
+                raise ValueError("Designation required")
+            print(json.dumps({"success": True, **suggest_access(sys.argv[2])}))
+
+        elif action == "revise-access":
+            if len(sys.argv) < 5:
+                raise ValueError("designation, tool, and requested_change required")
+            current_value = sys.argv[5] if len(sys.argv) >= 6 else ""
+            revision = revise_access_suggestion(sys.argv[2], sys.argv[3], sys.argv[4], current_value)
+            print(json.dumps({"success": True, **revision}))
 
         elif action == "provision":
             if len(sys.argv) < 6:

@@ -52,6 +52,8 @@ function App() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
   const pathname = window.location.pathname.replace(/\/$/, '') || '/';
+  const isLoginPage = pathname === '/' || pathname === '/login';
+  const isAuthenticated = Boolean(localStorage.getItem('kairos_access_token'));
   const Page = pages[pathname] || DashboardPage;
   const resolvedPath = pages[pathname] ? pathname : '/dashboard';
 
@@ -65,7 +67,22 @@ function App() {
     localStorage.setItem('peopleflow-theme', theme);
   }, [theme]);
 
-  if (pathname === '/' || pathname === '/login') return createElement(Page);
+  useEffect(() => {
+    function enforceAuthentication() {
+      const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+      const isProtectedPage = currentPath !== '/' && currentPath !== '/login';
+      if (isProtectedPage && !localStorage.getItem('kairos_access_token')) {
+        window.location.replace('/login');
+      }
+    }
+
+    enforceAuthentication();
+    window.addEventListener('pageshow', enforceAuthentication);
+    return () => window.removeEventListener('pageshow', enforceAuthentication);
+  }, []);
+
+  if (!isLoginPage && !isAuthenticated) return null;
+  if (isLoginPage) return createElement(Page);
 
   return createElement(
     DashboardLayout,

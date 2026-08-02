@@ -28,6 +28,12 @@ test('GET /health reports a healthy service', async () => {
   assert.deepEqual(await response.json(), { status: 'ok' });
 });
 
+test('GET /api/health reports a healthy service for the frontend proxy', async () => {
+  const response = await fetch(`${baseUrl}/api/health`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: 'ok' });
+});
+
 test('unknown routes return 404', async () => {
   const response = await fetch(`${baseUrl}/missing`);
 

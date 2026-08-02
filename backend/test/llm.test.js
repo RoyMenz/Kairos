@@ -45,6 +45,23 @@ test('POST /api/llm/choose-channel returns 400 when designation is missing', asy
   assert.equal(data.error, 'Designation is required');
 });
 
+test('POST /api/llm/suggest-access validates designation', async () => {
+  const response = await fetch(`${baseUrl}/api/llm/suggest-access`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}),
+  });
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), { error: 'Designation is required' });
+});
+
+test('POST /api/llm/revise-access validates required values', async () => {
+  const response = await fetch(`${baseUrl}/api/llm/revise-access`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ designation: 'Developer', tool: 'git' }),
+  });
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), { error: 'designation, tool, and requestedChange are required' });
+});
+
 test('POST /api/onboarding/provision returns 400 when parameters are missing', async () => {
   const response = await fetch(`${baseUrl}/api/onboarding/provision`, {
     method: 'POST',

@@ -29,6 +29,10 @@ app.get('/health', (request, response) => {
   response.json({ status: 'ok' });
 });
 
+app.get('/api/health', (request, response) => {
+  response.json({ status: 'ok' });
+});
+
 const handleLogin = async (request, response, next) => {
   try {
     const { email, workEmail, password } = request.body || {};
@@ -129,6 +133,13 @@ app.post('/api/employees', async (request, response, next) => {
           console.warn('Gemini channel choice notice:', chnErr.message);
         }
 
+        let accessSuggestion = null;
+        try {
+          accessSuggestion = await llmService.suggestAccess(role);
+        } catch (accessErr) {
+          console.warn('Gemini access suggestion notice:', accessErr.message);
+        }
+
         // Trigger Google Workspace account provisioning & activation email
         let provisionResult = null;
         try {
@@ -146,6 +157,9 @@ app.post('/api/employees', async (request, response, next) => {
         workflow = {
           classifiedRole: classification.role || 'backend',
           suggestedChannel: channelChoice.channel || 'general',
+          access: accessSuggestion?.access || null,
+          accessReason: accessSuggestion?.reason || '',
+          availableActions: accessSuggestion?.available_actions || ['edit', 'remove'],
           provisioning: provisionResult,
           status: 'AI Workflow Generated',
         };
@@ -250,6 +264,30 @@ app.post('/api/llm/choose-channel', async (request, response, next) => {
     }
     const result = await llmService.chooseChannel(designation, existingChannels);
     return response.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/llm/suggest-access', async (request, response, next) => {
+  try {
+    const { designation } = request.body || {};
+    if (!designation || typeof designation !== 'string' || !designation.trim()) {
+      return response.status(400).json({ error: 'Designation is required' });
+    }
+    return response.status(200).json(await llmService.suggestAccess(designation));
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/llm/revise-access', async (request, response, next) => {
+  try {
+    const { designation, tool, requestedChange, currentValue = '' } = request.body || {};
+    if (![designation, tool, requestedChange].every((value) => typeof value === 'string' && value.trim())) {
+      return response.status(400).json({ error: 'designation, tool, and requestedChange are required' });
+    }
+    return response.status(200).json(await llmService.reviseAccess(designation, tool, requestedChange, currentValue));
   } catch (err) {
     next(err);
   }

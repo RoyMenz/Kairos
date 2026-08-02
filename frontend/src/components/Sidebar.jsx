@@ -16,7 +16,7 @@ function Sidebar({ currentPath, open, onNavigate }) {
     localStorage.removeItem('kairos_access_token');
     localStorage.removeItem('kairos_user');
     onNavigate?.();
-    window.location.href = '/login';
+    window.location.replace('/login');
   }
 
   return (

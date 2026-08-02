@@ -107,6 +107,18 @@ async function chooseChannel(designation, channels = []) {
   return await runBridgeAction('choose-channel', [designation.trim(), channelsJson]);
 }
 
+async function suggestAccess(designation) {
+  if (!designation || typeof designation !== 'string') throw new Error('Designation string is required');
+  return await runBridgeAction('suggest-access', [designation.trim()]);
+}
+
+async function reviseAccess(designation, tool, requestedChange, currentValue = '') {
+  if (![designation, tool, requestedChange].every((value) => typeof value === 'string' && value.trim())) {
+    throw new Error('designation, tool, and requestedChange are required');
+  }
+  return await runBridgeAction('revise-access', [designation.trim(), tool.trim(), requestedChange.trim(), typeof currentValue === 'string' ? currentValue.trim() : '']);
+}
+
 async function provisionWorkspace(personalEmail, firstName, lastName, designation) {
   if (!personalEmail || !firstName || !lastName || !designation) {
     throw new Error('personalEmail, firstName, lastName, and designation are required');
@@ -169,6 +181,8 @@ module.exports = {
   startListener,
   classifyRole,
   chooseChannel,
+  suggestAccess,
+  reviseAccess,
   provisionWorkspace,
   startOnboarding,
   startExternalOnboarding,

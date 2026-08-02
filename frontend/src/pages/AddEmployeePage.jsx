@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { apiFetch } from '../api.js';
 
 function AddEmployeePage() {
   const [employee, setEmployee] = useState({
@@ -29,37 +30,21 @@ function AddEmployeePage() {
     setErrorMessage('');
 
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-      let response;
-      try {
-        response = await fetch('/api/employees', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...employee, generateWorkflow: true }),
-        });
-      } catch (fetchErr) {
-        response = await fetch(`${backendUrl}/api/employees`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...employee, generateWorkflow: true }),
-        });
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to add employee record');
-      }
+      const data = await apiFetch('/api/employees', {
+        method: 'POST',
+        body: JSON.stringify({ ...employee, generateWorkflow: true }),
+      });
 
       setCreatedEmployee(data.employee || null);
       const workflow = data.workflow || {};
       const role = workflow.classifiedRole || data.employee?.classified_role || data.employee?.role || employee.role;
       setSelectedRole(role);
+      const suggestedAccess = workflow.access || {};
       setAccessSuggestions([
-        { id: 'jira', label: 'Jira', value: workflow.jiraAccess || `${role} project access`, editing: false },
-        { id: 'slack', label: 'Slack', value: workflow.suggestedChannel ? `#${workflow.suggestedChannel}` : `#${data.employee?.slack_channel || 'general'}`, editing: false },
-        { id: 'git', label: 'Git', value: workflow.gitAccess || `${role} repository access`, editing: false },
-      ]);
+        { id: 'jira', label: 'Jira', value: suggestedAccess.jira || 'no-access', editing: false },
+        { id: 'slack', label: 'Slack', value: suggestedAccess.slack || 'member', editing: false },
+        { id: 'git', label: 'Git', value: suggestedAccess.git || 'no-access', editing: false },
+      ].filter((item) => item.value !== 'no-access'));
       setShowSuccess(true);
     } catch (err) {
       setErrorMessage(err.message || 'Error creating employee & generating AI workflow');
@@ -72,6 +57,23 @@ function AddEmployeePage() {
     setAccessSuggestions((current) =>
       current.map((item) => item.id === id ? { ...item, ...changes } : item)
     );
+  }
+
+  async function saveAccessEdit(item) {
+    try {
+      const result = await apiFetch('/api/llm/revise-access', {
+        method: 'POST',
+        body: JSON.stringify({
+          designation: employee.role,
+          tool: item.id,
+          requestedChange: item.value,
+          currentValue: item.value,
+        }),
+      });
+      updateAccess(item.id, { value: result.value, editing: false });
+    } catch (error) {
+      setErrorMessage(error.message);
+    }
   }
 
   function removeAccess(id) {
@@ -238,7 +240,7 @@ function AddEmployeePage() {
                     )}
                   </div>
                   <div className="access-suggestion-actions">
-                    <button onClick={() => updateAccess(item.id, { editing: !item.editing })}>
+                    <button onClick={() => item.editing ? saveAccessEdit(item) : updateAccess(item.id, { editing: true })}>
                       {item.editing ? 'Save' : 'Edit'}
                     </button>
                     <button className="remove" onClick={() => removeAccess(item.id)}>Remove</button>
