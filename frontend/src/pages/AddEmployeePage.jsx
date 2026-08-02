@@ -67,12 +67,6 @@ function AddEmployeePage() {
               Employees <span>›</span> Add New Employee
             </p>
           </div>
-          <div className="stepper">
-            <div className="step active">
-              <b>1</b>
-              <span>Details</span>
-            </div>
-          </div>
         </div>
 
         <div className="dashboard-grid">
@@ -141,10 +135,7 @@ function AddEmployeePage() {
                   </label>
                 </div>
                 <div className="form-actions">
-                  <button className="secondary-button" type="button">
-                    Save as Draft
-                  </button>
-                  <div>
+                  <div style={{ marginLeft: 'auto' }}>
                     <button className="text-button" type="reset">
                       Cancel
                     </button>

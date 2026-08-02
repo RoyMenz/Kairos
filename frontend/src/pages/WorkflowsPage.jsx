@@ -194,13 +194,6 @@ function WorkflowsPage() {
             Orchestrate identity provisioning across Zoho Workplace, Slack, GitHub, and Jira using live backend data.
           </p>
         </div>
-        <button
-          className="primary-button"
-          onClick={triggerActivationCheck}
-          disabled={actionLoading}
-        >
-          {actionLoading ? 'Executing Activation Watcher... ✦' : '⚡ Check & Complete All Workflows'}
-        </button>
       </section>
 
       {statusMessage && (
