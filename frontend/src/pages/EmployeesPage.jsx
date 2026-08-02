@@ -52,6 +52,7 @@ function EmployeesPage() {
       <main className="employees-main employees-page">
         <section className="directory-heading">
           <div>
+            <h1>Employee Directory</h1>
             <p>Manage identity provisioning and organizational structure.</p>
           </div>
           <div className="directory-actions">
