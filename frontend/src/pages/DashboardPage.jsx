@@ -85,6 +85,7 @@ function DashboardPage() {
       <main className="overview-main overview-page">
         <section className="overview-heading">
           <div>
+            <h1>Project Overview</h1>
             <p>
               PeopleFlow brings employee onboarding, application access, automated workflows,
               and system activity together in one place for easier HR operations.

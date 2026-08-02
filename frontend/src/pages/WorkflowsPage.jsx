@@ -201,10 +201,10 @@ function WorkflowsPage() {
         }}
       >
         <div>
-          <h1 style={{ margin: '0 0 6px 0', fontSize: '24px', color: '#0f172a' }}>
+          <h1>
             Onboarding Workflows &amp; Access Completion
           </h1>
-          <p style={{ margin: 0, color: '#64748b' }}>
+          <p>
             Orchestrate identity provisioning across Zoho Workplace, Slack, GitHub, and Jira using live backend data.
           </p>
         </div>
