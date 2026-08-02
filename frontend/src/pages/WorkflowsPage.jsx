@@ -192,13 +192,6 @@ function WorkflowsPage() {
     <main className="workflows-main workflows-page">
       <section
         className="workflows-heading"
-        style={{
-          display: 'flex',
-          justify: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '16px',
-        }}
       >
         <div>
           <h1>
@@ -212,56 +205,24 @@ function WorkflowsPage() {
           className="primary-button"
           onClick={triggerActivationCheck}
           disabled={actionLoading}
-          style={{
-            padding: '10px 18px',
-            backgroundColor: '#2563eb',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: '600',
-            cursor: actionLoading ? 'wait' : 'pointer',
-            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
-          }}
         >
           {actionLoading ? 'Executing Activation Watcher... ✦' : '⚡ Check & Complete All Workflows'}
         </button>
       </section>
 
       {statusMessage && (
-        <div
-          style={{
-            margin: '16px 0',
-            padding: '14px 16px',
-            borderRadius: '8px',
-            backgroundColor: statusMessage.startsWith('✓') ? '#f0fdf4' : '#fffbe6',
-            border: `1px solid ${statusMessage.startsWith('✓') ? '#bbf7d0' : '#ffe58f'}`,
-            color: statusMessage.startsWith('✓') ? '#166534' : '#873800',
-            fontSize: '14px',
-            fontWeight: '500',
-          }}
-        >
+        <div className={`workflow-message ${statusMessage.startsWith('✓') ? 'workflow-message--success' : 'workflow-message--warning'}`}>
           {statusMessage}
         </div>
       )}
 
-      <section className="workflows-table-card" style={{ marginTop: '20px' }}>
-        <header style={{ display: 'flex', gap: '8px', padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
+      <section className="workflows-table-card workflows-live-table">
+        <header className="workflow-filter-tabs">
           {['All', 'Awaiting Password', 'Fully Provisioned'].map((tab) => (
             <button
               key={tab}
               className={filter === tab ? 'active' : ''}
               onClick={() => setFilter(tab)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '6px',
-                border: '1px solid',
-                borderColor: filter === tab ? '#2563eb' : '#cbd5e1',
-                backgroundColor: filter === tab ? '#eff6ff' : '#ffffff',
-                color: filter === tab ? '#1d4ed8' : '#475569',
-                fontWeight: '600',
-                fontSize: '13px',
-                cursor: 'pointer',
-              }}
             >
               {tab}
             </button>
@@ -284,87 +245,49 @@ function WorkflowsPage() {
               {filteredFlows.map((flow) => (
                 <tr key={flow.email}>
                   <td>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <strong style={{ color: '#0f172a' }}>{flow.name}</strong>
-                      <span style={{ fontSize: '12px', color: '#64748b' }}>{flow.email}</span>
+                    <div className="workflow-employee">
+                      <strong>{flow.name}</strong>
+                      <span>{flow.email}</span>
                     </div>
                   </td>
                   <td>
-                    <span style={{ fontWeight: '600', color: '#334155' }}>{flow.role}</span>
+                    <span className="workflow-role">{flow.role}</span>
                     <br />
-                    <small style={{ color: '#2563eb', fontWeight: '500' }}>Role: {flow.classifiedRole}</small>
+                    <small className="workflow-classification">Role: {flow.classifiedRole}</small>
                   </td>
                   <td>
-                    <span
-                      style={{
-                        fontFamily: 'monospace',
-                        backgroundColor: '#f1f5f9',
-                        padding: '3px 8px',
-                        borderRadius: '4px',
-                        color: '#475569',
-                        fontSize: '13px',
-                      }}
-                    >
+                    <span className="workflow-channel">
                       #{flow.channel}
                     </span>
                   </td>
                   <td>
                     {flow.awaitingPassword ? (
-                      <span
-                        className="status status--provisioning"
-                        style={{
-                          backgroundColor: '#fff7ed',
-                          color: '#c2410c',
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                        }}
-                      >
+                      <span className="workflow-password workflow-password--pending">
                         ⏳ Awaiting 1st Password Change
                       </span>
                     ) : (
-                      <span
-                        className="status status--active"
-                        style={{
-                          backgroundColor: '#f0fdf4',
-                          color: '#15803d',
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                        }}
-                      >
+                      <span className="workflow-password workflow-password--complete">
                         ✓ Password Updated
                       </span>
                     )}
                   </td>
                   <td>
                     {flow.externalSent ? (
-                      <span style={{ color: '#16a34a', fontWeight: '600', fontSize: '13px' }}>
+                      <span className="workflow-access workflow-access--granted">
                         ✓ Access Granted
                       </span>
                     ) : (
-                      <span style={{ color: '#d97706', fontWeight: '500', fontSize: '13px' }}>
+                      <span className="workflow-access workflow-access--pending">
                         Pending Password Change
                       </span>
                     )}
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: '6px' }}>
+                    <div className="workflow-row-actions">
                       <button
                         onClick={() => triggerExternalAccess(flow.email, flow.classifiedRole)}
                         disabled={actionLoading}
-                        style={{
-                          padding: '4px 10px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: '#2563eb',
-                          backgroundColor: '#eff6ff',
-                          border: '1px solid #bfdbfe',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                        }}
+                        className="workflow-action workflow-action--primary"
                         title="Force release GitHub & Jira access"
                       >
                         Force GitHub &amp; Jira
@@ -372,16 +295,7 @@ function WorkflowsPage() {
                       <button
                         onClick={() => triggerSlackInvite(flow.email, flow.role, flow.classifiedRole)}
                         disabled={actionLoading}
-                        style={{
-                          padding: '4px 10px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: '#475569',
-                          backgroundColor: '#f8fafc',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                        }}
+                        className="workflow-action"
                         title="Re-send Slack Workspace Invitation"
                       >
                         Send Slack
@@ -394,7 +308,7 @@ function WorkflowsPage() {
           </table>
 
           {loading && (
-            <div style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>
+            <div className="workflow-loading">
               Loading workflow state from backend...
             </div>
           )}
@@ -407,45 +321,37 @@ function WorkflowsPage() {
           )}
         </div>
 
-        <footer style={{ padding: '14px 20px', borderTop: '1px solid #e2e8f0', color: '#64748b', fontSize: '13px' }}>
+        <footer>
           <span>Active workflows monitored by Gemini AI &amp; Zoho Workplace Password Watcher</span>
         </footer>
       </section>
 
-      <section
-        className="workflow-summary"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '16px',
-          marginTop: '24px',
-        }}
-      >
-        <article style={{ padding: '16px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-          <span style={{ fontSize: '20px' }}>ϟ</span>
+      <section className="workflow-summary workflow-live-summary">
+        <article>
+          <span>ϟ</span>
           <div>
-            <strong style={{ fontSize: '22px', color: '#1d4ed8' }}>{combinedFlows.length}</strong>
-            <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Total Onboarding Workflows</p>
+            <strong className="workflow-count--primary">{combinedFlows.length}</strong>
+            <p>Total Onboarding Workflows</p>
           </div>
         </article>
 
-        <article style={{ padding: '16px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-          <span style={{ fontSize: '20px' }}>⏳</span>
+        <article>
+          <span>⏳</span>
           <div>
-            <strong style={{ fontSize: '22px', color: '#ea580c' }}>
+            <strong className="workflow-count--warning">
               {combinedFlows.filter((f) => f.awaitingPassword).length}
             </strong>
-            <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Awaiting Password Change</p>
+            <p>Awaiting Password Change</p>
           </div>
         </article>
 
-        <article style={{ padding: '16px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-          <span style={{ fontSize: '20px' }}>✓</span>
+        <article>
+          <span>✓</span>
           <div>
-            <strong style={{ fontSize: '22px', color: '#16a34a' }}>
+            <strong className="workflow-count--success">
               {combinedFlows.filter((f) => !f.awaitingPassword || f.externalSent).length}
             </strong>
-            <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Access Provisioned</p>
+            <p>Access Provisioned</p>
           </div>
         </article>
       </section>
