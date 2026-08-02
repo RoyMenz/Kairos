@@ -68,10 +68,16 @@ function DashboardPage() {
   }
 
   const metrics = [
-    { icon: '◉', label: 'Total Employees', value: stats.totalEmployees, badge: 'Live DB' },
+    { icon: '◉', label: 'Total Employees', value: stats.totalEmployees, badge: 'Team Size' },
     { icon: '↻', label: 'Active Onboarding', value: stats.activeOnboarding, badge: 'In Progress', tone: 'orange' },
     { icon: '✓', label: 'Completed Today', value: stats.completedToday, badge: 'Updated Today' },
-    { icon: '!', label: 'Failed Tasks', value: stats.failedTasks, badge: 'All Operational', tone: 'red' },
+    {
+      icon: '!',
+      label: 'Failed Tasks',
+      value: stats.failedTasks,
+      badge: stats.failedTasks > 0 ? 'Needs Attention' : 'All Operational',
+      tone: 'red',
+    },
   ];
 
   return (
@@ -79,7 +85,10 @@ function DashboardPage() {
       <main className="overview-main overview-page">
         <section className="overview-heading">
           <div>
-            <h1>Project Overview</h1>
+            <p>
+              PeopleFlow brings employee onboarding, application access, automated workflows,
+              and system activity together in one place for easier HR operations.
+            </p>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <select value={range} onChange={(event) => setRange(event.target.value)}>
