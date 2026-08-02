@@ -66,9 +66,6 @@ function ApplicationsPage() {
             Manage identity provisioning and live access control across your enterprise stack.
           </p>
         </div>
-        <button className="primary-button" onClick={fetchApplicationsData}>
-          ↻ Refresh App Connections
-        </button>
       </section>
 
       {loading ? (

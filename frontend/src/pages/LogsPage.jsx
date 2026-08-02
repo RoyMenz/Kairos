@@ -148,7 +148,6 @@ function LogsPage() {
                       </td>
                       <td>
                         <div className={`event-name event-name--${item.status.toLowerCase()}`}>
-                          <span>{item.icon}</span>
                           <strong>{item.event}</strong>
                         </div>
                       </td>
