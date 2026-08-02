@@ -339,9 +339,6 @@ function EmployeesPage() {
                 <li>Revoke access in Jira Software.</li>
                 <li>Remove user from all managed Slack channels.</li>
               </ul>
-              <div className="offboard-warning">
-                <strong>Slack Plan Note:</strong> On non-Enterprise Slack plans, backend removes users from channels. A Slack Workspace Owner must deactivate the Slack user account manually in Slack Admin Console.
-              </div>
             </div>
 
             <footer className="offboard-dialog-actions">
