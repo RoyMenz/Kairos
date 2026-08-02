@@ -130,9 +130,9 @@ function EmployeesPage() {
         </section>
 
         {notice && (
-          <div style={{ margin: '0 0 16px 0', padding: '12px 16px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', color: '#1e40af', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="directory-notice">
             <span>{notice}</span>
-            <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => setNotice('')}>×</button>
+            <button onClick={() => setNotice('')}>×</button>
           </div>
         )}
 
@@ -156,16 +156,7 @@ function EmployeesPage() {
                   return (
                     <tr key={employee.employee_id || employee.email}>
                       <td>
-                        <span
-                          style={{
-                            fontWeight: '700',
-                            fontFamily: 'monospace',
-                            color: '#2563eb',
-                            backgroundColor: '#eff6ff',
-                            padding: '4px 8px',
-                            borderRadius: '6px',
-                          }}
-                        >
+                        <span className="employee-id-badge">
                           {employee.employee_id || 'KS001'}
                         </span>
                       </td>
@@ -188,17 +179,17 @@ function EmployeesPage() {
                       <td>{employee.department || 'Engineering'}</td>
                       <td>{employee.role}</td>
                       <td>
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: '#f3f4f6', color: '#374151' }}>
+                        <div className="platform-badges">
+                          <span>
                             Zoho: {employee.zoho_zuid ? '✓' : '…'}
                           </span>
-                          <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: '#f3f4f6', color: '#374151' }}>
+                          <span>
                             Slack: {employee.slack_user_id ? '✓' : '…'}
                           </span>
-                          <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: '#f3f4f6', color: '#374151' }}>
+                          <span>
                             GH: {employee.github_username ? '✓' : employee.github_invitation_id ? 'Inv' : '…'}
                           </span>
-                          <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: '#f3f4f6', color: '#374151' }}>
+                          <span>
                             Jira: {employee.jira_account_id ? '✓' : '…'}
                           </span>
                         </div>
@@ -223,7 +214,7 @@ function EmployeesPage() {
 
                           {statusLower !== 'offboarded' && (
                             <button
-                              style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
+                              className="offboard-action"
                               title="Offboard employee"
                               onClick={() => setOffboardConfirm(employee)}
                             >
@@ -248,7 +239,7 @@ function EmployeesPage() {
               </tbody>
             </table>
             {loading && (
-              <div style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>
+              <div className="directory-loading">
                 Loading directory...
               </div>
             )}
@@ -286,7 +277,7 @@ function EmployeesPage() {
               </span>
               <button
                 disabled={actionLoading}
-                style={{ background: '#f3f4f6', border: '1px solid #d1d5db', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                className="retry-provisioning"
                 onClick={() => retryProvisioning(selectedEmployee)}
               >
                 ↻ Retry Provisioning
@@ -333,13 +324,13 @@ function EmployeesPage() {
           <section className="profile-modal" style={{ maxWidth: '480px' }} onMouseDown={(e) => e.stopPropagation()}>
             <header>
               <div>
-                <span style={{ color: '#dc2626', fontWeight: 'bold' }}>⚠️ Offboarding Confirmation</span>
+                <span className="offboard-title">⚠️ Offboarding Confirmation</span>
                 <h2>Offboard {offboardConfirm.name}?</h2>
               </div>
               <button className="profile-close" onClick={() => setOffboardConfirm(null)}>×</button>
             </header>
 
-            <div style={{ padding: '16px 0', fontSize: '14px', lineHeight: '1.5', color: '#374151' }}>
+            <div className="offboard-confirm-content">
               <p>Executing offboarding will perform the following actions:</p>
               <ul style={{ margin: '8px 0 16px 20px', padding: 0 }}>
                 <li>Disable Zoho Workplace account and mailbox access.</li>
@@ -347,13 +338,13 @@ function EmployeesPage() {
                 <li>Revoke access in Jira Software.</li>
                 <li>Remove user from all managed Slack channels.</li>
               </ul>
-              <div style={{ background: '#fffbe6', border: '1px solid #ffe58f', padding: '10px 12px', borderRadius: '6px', fontSize: '12px', color: '#873800' }}>
+              <div className="offboard-warning">
                 <strong>Slack Plan Note:</strong> On non-Enterprise Slack plans, backend removes users from channels. A Slack Workspace Owner must deactivate the Slack user account manually in Slack Admin Console.
               </div>
             </div>
 
             <footer style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button style={{ background: '#f3f4f6', border: '1px solid #d1d5db', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setOffboardConfirm(null)}>
+              <button className="offboard-cancel" onClick={() => setOffboardConfirm(null)}>
                 Cancel
               </button>
               <button

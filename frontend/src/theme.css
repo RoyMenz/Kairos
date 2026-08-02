@@ -147,9 +147,12 @@
   --palette-15213a: #f3f6fb;
   --palette-1e293e: #e5eaf3;
   --palette-1e4ebf: #8bb0ff;
+  --palette-1e55a5: #78a4ff;
+  --palette-187353: #6ed8ad;
   --palette-243046: #e8edf5;
   --palette-263143: #e8edf5;
   --palette-273348: #e8edf5;
+  --palette-2757ba: #8bb0ff;
   --palette-283449: #e8edf5;
   --palette-29344a: #e8edf5;
   --palette-29354a: #e8edf5;
@@ -209,6 +212,7 @@
   --palette-d7dde8: #344258;
   --palette-d7deea: #344258;
   --palette-d8deea: #344258;
+  --palette-dcf5e9: #153b31;
   --palette-dfe5ed: #2a3649;
   --palette-dfe5ee: #2a3649;
   --palette-e0e5ed: #2a3649;
@@ -218,9 +222,15 @@
   --palette-e1e8f6: #26344a;
   --palette-e2e6ee: #2a3649;
   --palette-e3e7ee: #2a3649;
+  --palette-e4edff: #172e52;
   --palette-e4e8ef: #2a3649;
   --palette-e5e9f0: #2a3649;
+  --palette-e5edff: #172e52;
   --palette-e6eaf1: #2a3649;
+  --palette-e6edf7: #202c3f;
+  --palette-e6edf8: #202c3f;
+  --palette-e6efff: #172e52;
+  --palette-e1edff: #172e52;
   --palette-e7ebf1: #2a3649;
   --palette-e7ebf2: #2a3649;
   --palette-e8eef8: #1b2638;
