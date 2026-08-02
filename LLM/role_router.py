@@ -78,10 +78,11 @@ def suggest_access(designation: str) -> dict[str, object]:
 You recommend least-privilege access for an employee onboarding review.
 Employee designation: {designation!r}
 
-Return recommendations for exactly these systems:
-- jira: no-access, view, or edit
-- slack: no-access or member
-- git: no-access, read, or write
+Return recommendations for exactly these systems. The displayed access value
+must be the actual destination, not a permission level:
+- jira: the Jira project name
+- slack: the Slack channel name, without #
+- git: the Git repository or team name
 
 Do not grant access or describe steps to provision it. The review UI supports
 only two actions for every suggested system: edit and remove. Never return an
@@ -90,7 +91,7 @@ admin access level. Prefer no-access when the tool is not required.
 Return JSON only:
 {{
   "designation": "<the supplied designation>",
-  "access": {{"jira": "edit", "slack": "member", "git": "write"}},
+  "access": {{"jira": "Frontend", "slack": "frontend-developers", "git": "frontend-repo"}},
   "resources": {{
     "jira": {{"project": "project-name"}},
     "slack": {{"channel": "channel-name-without-hash"}},
@@ -114,16 +115,10 @@ Return JSON only:
     except (json.JSONDecodeError, KeyError, TypeError) as error:
         raise RuntimeError("Gemini did not return a valid access suggestion.") from error
 
-    permitted = {
-        "jira": {"no-access", "view", "edit"},
-        "slack": {"no-access", "member"},
-        "git": {"no-access", "read", "write"},
-    }
-    if not isinstance(access, dict) or set(access) != set(permitted):
+    required_tools = {"jira", "slack", "git"}
+    if not isinstance(access, dict) or set(access) != required_tools:
         raise RuntimeError("Gemini returned an incomplete access suggestion.")
-    if any(access[tool] not in levels for tool, levels in permitted.items()):
-        raise RuntimeError("Gemini returned an unsupported access level.")
-    if not isinstance(resources, dict) or set(resources) != set(permitted):
+    if not isinstance(resources, dict) or set(resources) != required_tools:
         raise RuntimeError("Gemini returned incomplete access resources.")
     resource_fields = {"jira": "project", "slack": "channel", "git": "repository"}
     normalized_resources: dict[str, dict[str, str]] = {}
@@ -135,6 +130,8 @@ Return JSON only:
         value = value.strip().lstrip("#")
         if tool == "slack":
             value = validate_channel_name(value)
+        if not isinstance(access.get(tool), str) or access[tool].strip().lstrip("#") != value:
+            raise RuntimeError("Gemini returned mismatched access and resource values.")
         normalized_resources[tool] = {field: value}
 
     actions = suggestion.get("available_actions")
