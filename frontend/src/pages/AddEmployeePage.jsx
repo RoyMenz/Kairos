@@ -9,6 +9,8 @@ function AddEmployeePage() {
     department: 'Engineering',
   });
   const [createdEmployee, setCreatedEmployee] = useState(null);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [accessSuggestions, setAccessSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -50,12 +52,40 @@ function AddEmployeePage() {
       }
 
       setCreatedEmployee(data.employee || null);
+      const workflow = data.workflow || {};
+      const role = workflow.classifiedRole || data.employee?.classified_role || data.employee?.role || employee.role;
+      setSelectedRole(role);
+      setAccessSuggestions([
+        { id: 'jira', label: 'Jira', value: workflow.jiraAccess || `${role} project access`, approved: false, editing: false },
+        { id: 'slack', label: 'Slack', value: workflow.suggestedChannel ? `#${workflow.suggestedChannel}` : `#${data.employee?.slack_channel || 'general'}`, approved: false, editing: false },
+        { id: 'git', label: 'Git', value: workflow.gitAccess || `${role} repository access`, approved: false, editing: false },
+      ]);
       setShowSuccess(true);
     } catch (err) {
       setErrorMessage(err.message || 'Error creating employee & generating AI workflow');
     } finally {
       setLoading(false);
     }
+  }
+
+  function updateAccess(id, changes) {
+    setAccessSuggestions((current) =>
+      current.map((item) => item.id === id ? { ...item, ...changes } : item)
+    );
+  }
+
+  function removeAccess(id) {
+    setAccessSuggestions((current) => current.filter((item) => item.id !== id));
+  }
+
+  function finishAccessReview() {
+    const review = {
+      employeeId: createdEmployee?.employee_id,
+      role: selectedRole,
+      access: accessSuggestions.map(({ id, label, value, approved }) => ({ id, label, value, approved })),
+    };
+    localStorage.setItem(`peopleflow-access-${createdEmployee?.employee_id || employee.email}`, JSON.stringify(review));
+    window.location.href = '/employees';
   }
 
   return (
@@ -180,57 +210,54 @@ function AddEmployeePage() {
 
       {showSuccess && (
         <div className="success-overlay" role="dialog" aria-modal="true">
-          <div className="success-dialog" style={{ maxWidth: '520px', width: '92%' }}>
-            <div className="success-check">✓</div>
-            <h2>AI Workflow Generated Successfully</h2>
+          <div className="access-review-modal">
+            <header>
+              <span>LLM Access Review</span>
+              <h2>Review suggested access</h2>
+              <p>Approve or adjust access for the selected role before finishing.</p>
+            </header>
 
-            <div className="success-summary">
-              <div>
-                <span>Assigned Employee ID</span>
-                <strong>{createdEmployee?.employee_id || 'Pending'}</strong>
-              </div>
-              <div>
-                <span>Role</span>
-                <strong>{createdEmployee?.role || employee.role}</strong>
-              </div>
+            <section className="access-review-role">
+              <span>Selected Role</span>
+              <strong>{selectedRole}</strong>
+            </section>
+
+            <div className="access-suggestion-list">
+              {accessSuggestions.map((item) => (
+                <article key={item.id}>
+                  <div className="access-suggestion-copy">
+                    <strong>{item.label}</strong>
+                    {item.editing ? (
+                      <input
+                        value={item.value}
+                        autoFocus
+                        onChange={(event) => updateAccess(item.id, { value: event.target.value })}
+                      />
+                    ) : (
+                      <span>{item.value}</span>
+                    )}
+                  </div>
+                  <div className="access-suggestion-actions">
+                    <button onClick={() => updateAccess(item.id, { editing: !item.editing })}>
+                      {item.editing ? 'Save' : 'Edit'}
+                    </button>
+                    <button className="remove" onClick={() => removeAccess(item.id)}>Remove</button>
+                    <button
+                      className={item.approved ? 'approved' : ''}
+                      onClick={() => updateAccess(item.id, { approved: !item.approved, editing: false })}
+                    >
+                      {item.approved ? 'Approved' : 'Approve'}
+                    </button>
+                  </div>
+                </article>
+              ))}
+              {accessSuggestions.length === 0 && (
+                <p className="access-review-empty">No access will be assigned.</p>
+              )}
             </div>
 
-            <dl className="success-employee-details">
-              <div>
-                <dt>Name</dt>
-                <dd>{createdEmployee?.name || employee.name}</dd>
-              </div>
-              <div>
-                <dt>Personal Email</dt>
-                <dd>{employee.email}</dd>
-              </div>
-              <div>
-                <dt>Work Email</dt>
-                <dd>{createdEmployee?.email || 'Pending account creation'}</dd>
-              </div>
-              <div>
-                <dt>Date of Joining</dt>
-                <dd>{createdEmployee?.joining_date || createdEmployee?.joiningDate || employee.joiningDate}</dd>
-              </div>
-            </dl>
-
-            <div className="success-actions">
-              <button
-                className="secondary-button"
-                onClick={() => {
-                  window.location.href = '/employees';
-                }}
-              >
-                View Employees Directory
-              </button>
-              <button
-                className="primary-button"
-                onClick={() => {
-                  window.location.href = '/dashboard';
-                }}
-              >
-                Return to Dashboard
-              </button>
+            <div className="access-review-footer">
+              <button className="primary-button" onClick={finishAccessReview}>Finish</button>
             </div>
           </div>
         </div>

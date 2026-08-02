@@ -137,7 +137,7 @@ function LogsPage() {
                     <th>User / Subject</th>
                     <th>Admin / Source</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th aria-label="Log details" />
                   </tr>
                 </thead>
                 <tbody>
