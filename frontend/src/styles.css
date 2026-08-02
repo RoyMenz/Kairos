@@ -352,6 +352,15 @@ a { color: inherit; }
   font-size: var(--font-size-title-lg);
 }
 
+.profile-modal.offboard-dialog header h2 {
+  color: var(--color-text-strong);
+  font-size: var(--font-size-subtitle);
+}
+
+.profile-modal.offboard-dialog header .offboard-title {
+  color: var(--color-text-secondary);
+}
+
 .profile-modal header p {
   margin: 0;
   color: rgba(255, 255, 255, .82);
