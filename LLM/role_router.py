@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys
 
 from google import genai
 from google.genai import types
@@ -17,15 +18,27 @@ def _log_token_usage(operation: str, response) -> None:
     usage = getattr(response, "usage_metadata", None)
     if usage is None:
         LOGGER.warning("Gemini did not return token usage for %s.", operation)
+        print(f"Gemini token usage [{operation}]: unavailable", file=sys.stderr)
         return
+    prompt_tokens = getattr(usage, "prompt_token_count", None)
+    output_tokens = getattr(usage, "candidates_token_count", None)
+    total_tokens = getattr(usage, "total_token_count", None)
+    cached_tokens = getattr(usage, "cached_content_token_count", None)
+    thought_tokens = getattr(usage, "thoughts_token_count", None)
     LOGGER.info(
         "Gemini token usage [%s]: prompt=%s, output=%s, total=%s, cached=%s, thoughts=%s",
         operation,
-        getattr(usage, "prompt_token_count", None),
-        getattr(usage, "candidates_token_count", None),
-        getattr(usage, "total_token_count", None),
-        getattr(usage, "cached_content_token_count", None),
-        getattr(usage, "thoughts_token_count", None),
+        prompt_tokens,
+        output_tokens,
+        total_tokens,
+        cached_tokens,
+        thought_tokens,
+    )
+    print(
+        f"Gemini token usage [{operation}]: input={prompt_tokens}, "
+        f"output={output_tokens}, total={total_tokens}, "
+        f"cached={cached_tokens}, thoughts={thought_tokens}",
+        file=sys.stderr,
     )
 
 
