@@ -308,8 +308,8 @@ function WorkflowsPage() {
           </table>
 
           {loading && (
-            <div className="workflow-loading">
-              Loading workflow state from backend...
+            <div className="workflow-loading" role="status" aria-label="Loading workflows">
+              <span className="workflow-loading-spinner" aria-hidden="true" />
             </div>
           )}
 
