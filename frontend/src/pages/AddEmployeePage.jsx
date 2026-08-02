@@ -56,9 +56,9 @@ function AddEmployeePage() {
       const role = workflow.classifiedRole || data.employee?.classified_role || data.employee?.role || employee.role;
       setSelectedRole(role);
       setAccessSuggestions([
-        { id: 'jira', label: 'Jira', value: workflow.jiraAccess || `${role} project access`, approved: false, editing: false },
-        { id: 'slack', label: 'Slack', value: workflow.suggestedChannel ? `#${workflow.suggestedChannel}` : `#${data.employee?.slack_channel || 'general'}`, approved: false, editing: false },
-        { id: 'git', label: 'Git', value: workflow.gitAccess || `${role} repository access`, approved: false, editing: false },
+        { id: 'jira', label: 'Jira', value: workflow.jiraAccess || `${role} project access`, editing: false },
+        { id: 'slack', label: 'Slack', value: workflow.suggestedChannel ? `#${workflow.suggestedChannel}` : `#${data.employee?.slack_channel || 'general'}`, editing: false },
+        { id: 'git', label: 'Git', value: workflow.gitAccess || `${role} repository access`, editing: false },
       ]);
       setShowSuccess(true);
     } catch (err) {
@@ -82,7 +82,7 @@ function AddEmployeePage() {
     const review = {
       employeeId: createdEmployee?.employee_id,
       role: selectedRole,
-      access: accessSuggestions.map(({ id, label, value, approved }) => ({ id, label, value, approved })),
+      access: accessSuggestions.map(({ id, label, value }) => ({ id, label, value })),
     };
     localStorage.setItem(`peopleflow-access-${createdEmployee?.employee_id || employee.email}`, JSON.stringify(review));
     window.location.href = '/employees';
@@ -214,7 +214,7 @@ function AddEmployeePage() {
             <header>
               <span>LLM Access Review</span>
               <h2>Review suggested access</h2>
-              <p>Approve or adjust access for the selected role before finishing.</p>
+              <p>Edit or remove suggested access for the selected role before finishing.</p>
             </header>
 
             <section className="access-review-role">
@@ -242,12 +242,6 @@ function AddEmployeePage() {
                       {item.editing ? 'Save' : 'Edit'}
                     </button>
                     <button className="remove" onClick={() => removeAccess(item.id)}>Remove</button>
-                    <button
-                      className={item.approved ? 'approved' : ''}
-                      onClick={() => updateAccess(item.id, { approved: !item.approved, editing: false })}
-                    >
-                      {item.approved ? 'Approved' : 'Approve'}
-                    </button>
                   </div>
                 </article>
               ))}
