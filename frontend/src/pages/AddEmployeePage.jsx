@@ -152,7 +152,10 @@ function AddEmployeePage() {
                     </button>
                     <button className="primary-button" type="submit" disabled={loading}>
                       {loading ? (
-                        <span>Executing Gemini AI Workflow... ✦</span>
+                        <span className="ai-button-loading">
+                          <i className="ai-button-spinner" aria-hidden="true" />
+                          Generating AI Workflow...
+                        </span>
                       ) : (
                         <>
                           Generate AI Workflow <span>✦</span>
@@ -180,15 +183,6 @@ function AddEmployeePage() {
               </div>
               <h2>{employee.name || 'New Hire'}</h2>
               <p>{employee.role || 'Role not specified'}</p>
-            </div>
-            <div className="accuracy">
-              <div>
-                <span>Data Accuracy</span>
-                <strong>High (94%)</strong>
-              </div>
-              <div className="progress">
-                <span />
-              </div>
             </div>
             <blockquote>“Streamlining onboarding through automated identity management &amp; Gemini AI.”</blockquote>
           </aside>

@@ -78,6 +78,9 @@ a { color: inherit; }
 .submit-button:disabled { cursor: default; }
 .submit-button--verified { background: var(--palette-15825f); box-shadow: 0 8px 18px rgba(21, 130, 95, .2); }
 .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.45); border-top-color: var(--color-surface); border-radius: 50%; animation: spin .8s linear infinite; }
+.ai-button-loading { display: inline-flex; align-items: center; gap: 8px; }
+.ai-button-spinner { width: 15px; height: 15px; flex: none; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+.primary-button:disabled { cursor: wait; opacity: .8; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .security-note { display: flex; gap: 11px; margin-top: 28px; padding: 15px; border-left: 3px solid var(--color-primary-focus); border-radius: var(--radius-md); background: var(--palette-f2f6ff); }
