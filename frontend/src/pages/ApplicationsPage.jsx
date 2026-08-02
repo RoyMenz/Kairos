@@ -2,12 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 function ApplicationsPage() {
   const [applications, setApplications] = useState([]);
-  const [stats, setStats] = useState({
-    totalActiveSeats: '0',
-    securityHealth: '100% Secure',
-    apiLatency: '18ms',
-    systemStatus: 'Healthy',
-  });
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
 
@@ -29,9 +23,6 @@ function ApplicationsPage() {
       const data = await res.json();
       if (data.success && Array.isArray(data.applications)) {
         setApplications(data.applications);
-        if (data.stats) {
-          setStats(data.stats);
-        }
       }
     } catch (err) {
       console.error('Failed to fetch applications data from DB backend:', err);
@@ -83,7 +74,7 @@ function ApplicationsPage() {
               <p>{app.description}</p>
               <footer>
                 <div>
-                  <small>Active DB Users</small>
+                  <small>Active Users</small>
                   <strong>{app.users}</strong>
                 </div>
                 {app.status === 'Needs Re-auth' ? (
@@ -94,11 +85,6 @@ function ApplicationsPage() {
               </footer>
             </article>
           ))}
-          <button className="add-integration">
-            <span>＋</span>
-            <strong>Add Integration</strong>
-            <p>Connect 500+ other enterprise apps instantly.</p>
-          </button>
         </section>
       )}
 
@@ -109,26 +95,6 @@ function ApplicationsPage() {
         </div>
       )}
 
-      <footer className="applications-stats">
-        <div>
-          <span>
-            <small>Total Active Seats</small>
-            <strong>{stats.totalActiveSeats}</strong>
-          </span>
-          <span>
-            <small>Security Health</small>
-            <strong className="healthy">{stats.securityHealth}</strong>
-          </span>
-          <span>
-            <small>API Latency</small>
-            <strong>{stats.apiLatency}</strong>
-          </span>
-        </div>
-        <p>
-          System Status: <b>{stats.systemStatus}</b>
-          <i />
-        </p>
-      </footer>
     </main>
   );
 }
