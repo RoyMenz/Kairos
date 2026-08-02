@@ -78,6 +78,11 @@ Return JSON only:
 {{
   "designation": "<the supplied designation>",
   "access": {{"jira": "edit", "slack": "member", "git": "write"}},
+  "resources": {{
+    "jira": {{"project": "project-name"}},
+    "slack": {{"channel": "channel-name-without-hash"}},
+    "git": {{"repository": "repository-or-team-name"}}
+  }},
   "available_actions": ["edit", "remove"],
   "reason": "One concise explanation."
 }}
@@ -92,6 +97,7 @@ Return JSON only:
     try:
         suggestion = json.loads(response.text)
         access = suggestion["access"]
+        resources = suggestion["resources"]
     except (json.JSONDecodeError, KeyError, TypeError) as error:
         raise RuntimeError("Gemini did not return a valid access suggestion.") from error
 
@@ -104,6 +110,19 @@ Return JSON only:
         raise RuntimeError("Gemini returned an incomplete access suggestion.")
     if any(access[tool] not in levels for tool, levels in permitted.items()):
         raise RuntimeError("Gemini returned an unsupported access level.")
+    if not isinstance(resources, dict) or set(resources) != set(permitted):
+        raise RuntimeError("Gemini returned incomplete access resources.")
+    resource_fields = {"jira": "project", "slack": "channel", "git": "repository"}
+    normalized_resources: dict[str, dict[str, str]] = {}
+    for tool, field in resource_fields.items():
+        resource = resources.get(tool)
+        value = resource.get(field) if isinstance(resource, dict) else None
+        if not isinstance(value, str) or not value.strip() or len(value.strip()) > 120:
+            raise RuntimeError("Gemini returned an invalid access resource.")
+        value = value.strip().lstrip("#")
+        if tool == "slack":
+            value = validate_channel_name(value)
+        normalized_resources[tool] = {field: value}
 
     actions = suggestion.get("available_actions")
     if actions != ["edit", "remove"]:
@@ -114,6 +133,7 @@ Return JSON only:
     return {
         "designation": designation,
         "access": access,
+        "resources": normalized_resources,
         "available_actions": actions,
         "reason": reason.strip(),
     }
