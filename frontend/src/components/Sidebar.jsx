@@ -4,13 +4,19 @@ const navigation = [
   { icon: '⌘', label: 'Workflows', href: '/workflows' },
   { icon: '▤', label: 'Applications', href: '/applications' },
   { icon: '☷', label: 'Logs', href: '/logs' },
-  { icon: '⚙', label: 'Settings', href: '/settings' },
 ];
 
 function Sidebar({ currentPath, open, onNavigate }) {
   function isActive(href) {
     if (href === '/employees') return currentPath === '/employees' || currentPath.startsWith('/employees/');
     return currentPath === href;
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('kairos_access_token');
+    localStorage.removeItem('kairos_user');
+    onNavigate?.();
+    window.location.href = '/login';
   }
 
   return (
@@ -26,6 +32,10 @@ function Sidebar({ currentPath, open, onNavigate }) {
           </a>
         ))}
       </nav>
+      <button className="sidebar-logout" type="button" onClick={handleLogout}>
+        <span aria-hidden="true">⇥</span>
+        Logout
+      </button>
     </aside>
   );
 }

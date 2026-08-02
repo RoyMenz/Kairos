@@ -115,6 +115,7 @@ a { color: inherit; }
 .side-nav a:hover { color: var(--color-text); background: var(--palette-f0f4fc); }
 .side-nav a.active { color: var(--color-primary); background: var(--color-primary-soft); font-weight: 700; }
 .side-nav a span { width: 21px; text-align: center; font-size: var(--font-size-title); }
+.sidebar-logout { display: flex; width: 100%; min-height: 42px; align-items: center; gap: 13px; margin-top: auto; padding: 0 13px; border: 1px solid var(--color-border); border-radius: 9px; color: var(--color-text-secondary); background: var(--color-surface-subtle); font-size: var(--font-size-body); font-weight: 600; cursor: pointer; transition: color .2s, border-color .2s, background .2s; }.sidebar-logout:hover { border-color: var(--color-primary-border); color: var(--color-primary); background: var(--color-primary-soft); }.sidebar-logout span { width: 21px; font-size: var(--font-size-title); text-align: center; }
 .user-card { display: flex; align-items: center; gap: 11px; margin-top: auto; padding: 18px 7px 0; border-top: 1px solid var(--palette-e2e6ee); }
 .avatar { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border-radius: 50%; color: var(--palette-2854ac); background: var(--palette-dce8ff); font-size: var(--font-size-base); font-weight: 700; }
 .user-card div:last-child { display: flex; flex-direction: column; }
