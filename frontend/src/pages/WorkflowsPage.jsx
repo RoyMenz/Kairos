@@ -6,7 +6,6 @@ function WorkflowsPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
-  const [filter, setFilter] = useState('All');
 
   useEffect(() => {
     document.title = 'Workflows & Onboarding Completion | PeopleFlow';
@@ -182,12 +181,6 @@ function WorkflowsPage() {
     }
   });
 
-  const filteredFlows = combinedFlows.filter((flow) => {
-    if (filter === 'Awaiting Password') return flow.awaitingPassword;
-    if (filter === 'Fully Provisioned') return flow.externalSent || !flow.awaitingPassword;
-    return true;
-  });
-
   return (
     <main className="workflows-main workflows-page">
       <section
@@ -217,18 +210,6 @@ function WorkflowsPage() {
       )}
 
       <section className="workflows-table-card workflows-live-table">
-        <header className="workflow-filter-tabs">
-          {['All', 'Awaiting Password', 'Fully Provisioned'].map((tab) => (
-            <button
-              key={tab}
-              className={filter === tab ? 'active' : ''}
-              onClick={() => setFilter(tab)}
-            >
-              {tab}
-            </button>
-          ))}
-        </header>
-
         <div className="table-scroll">
           <table>
             <thead>
@@ -236,13 +217,11 @@ function WorkflowsPage() {
                 <th>Target Employee</th>
                 <th>Role Designation</th>
                 <th>Assigned Slack Channel</th>
-                <th>Password Activation</th>
-                <th>External Access (GitHub / Jira)</th>
-                <th>Trigger Action</th>
+                <th>Resend Invitation</th>
               </tr>
             </thead>
             <tbody>
-              {filteredFlows.map((flow) => (
+              {combinedFlows.map((flow) => (
                 <tr key={flow.email}>
                   <td>
                     <div className="workflow-employee">
@@ -261,44 +240,30 @@ function WorkflowsPage() {
                     </span>
                   </td>
                   <td>
-                    {flow.awaitingPassword ? (
-                      <span className="workflow-password workflow-password--pending">
-                        ⏳ Awaiting 1st Password Change
-                      </span>
-                    ) : (
-                      <span className="workflow-password workflow-password--complete">
-                        ✓ Password Updated
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    {flow.externalSent ? (
-                      <span className="workflow-access workflow-access--granted">
-                        ✓ Access Granted
-                      </span>
-                    ) : (
-                      <span className="workflow-access workflow-access--pending">
-                        Pending Password Change
-                      </span>
-                    )}
-                  </td>
-                  <td>
                     <div className="workflow-row-actions">
                       <button
                         onClick={() => triggerExternalAccess(flow.email, flow.classifiedRole)}
                         disabled={actionLoading}
-                        className="workflow-action workflow-action--primary"
-                        title="Force release GitHub & Jira access"
+                        className="workflow-action workflow-action--github"
+                        title="Resend GitHub invitation"
                       >
-                        Force GitHub &amp; Jira
+                        GitHub
+                      </button>
+                      <button
+                        onClick={() => triggerExternalAccess(flow.email, flow.classifiedRole)}
+                        disabled={actionLoading}
+                        className="workflow-action workflow-action--jira"
+                        title="Resend Jira invitation"
+                      >
+                        Jira
                       </button>
                       <button
                         onClick={() => triggerSlackInvite(flow.email, flow.role, flow.classifiedRole)}
                         disabled={actionLoading}
-                        className="workflow-action"
-                        title="Re-send Slack Workspace Invitation"
+                        className="workflow-action workflow-action--slack"
+                        title="Resend Slack workspace invitation"
                       >
-                        Send Slack
+                        Slack
                       </button>
                     </div>
                   </td>
@@ -313,7 +278,7 @@ function WorkflowsPage() {
             </div>
           )}
 
-          {!loading && filteredFlows.length === 0 && (
+          {!loading && combinedFlows.length === 0 && (
             <div className="empty-directory" style={{ padding: '32px', textAlign: 'center' }}>
               <strong>No active onboarding workflows found</strong>
               <span>Add employees to automatically trigger provisioning workflows.</span>
@@ -332,16 +297,6 @@ function WorkflowsPage() {
           <div>
             <strong className="workflow-count--primary">{combinedFlows.length}</strong>
             <p>Total Onboarding Workflows</p>
-          </div>
-        </article>
-
-        <article>
-          <span>⏳</span>
-          <div>
-            <strong className="workflow-count--warning">
-              {combinedFlows.filter((f) => f.awaitingPassword).length}
-            </strong>
-            <p>Awaiting Password Change</p>
           </div>
         </article>
 

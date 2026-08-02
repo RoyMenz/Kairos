@@ -4,11 +4,9 @@ function LogsPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
-  const [statuses, setStatuses] = useState(['Success', 'Warning', 'Critical']);
   const [application, setApplication] = useState('All Applications');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [view, setView] = useState('Table');
 
   useEffect(() => {
     document.title = 'Logs & Monitoring | PeopleFlow';
@@ -41,7 +39,6 @@ function LogsPage() {
       const textMatch = `${item.event} ${item.user} ${item.admin} ${item.app || ''}`
         .toLowerCase()
         .includes(query.toLowerCase());
-      const statusMatch = statuses.length === 0 || statuses.includes(item.status);
       const appMatch = application === 'All Applications' || item.app === application;
 
       let dateMatch = true;
@@ -51,18 +48,11 @@ function LogsPage() {
         if (endDate && eventDate > endDate) dateMatch = false;
       }
 
-      return textMatch && statusMatch && appMatch && dateMatch;
+      return textMatch && appMatch && dateMatch;
     });
-  }, [events, query, statuses, application, startDate, endDate]);
-
-  function toggleStatus(status) {
-    setStatuses((current) =>
-      current.includes(status) ? current.filter((item) => item !== status) : [...current, status]
-    );
-  }
+  }, [events, query, application, startDate, endDate]);
 
   function resetFilters() {
-    setStatuses(['Success', 'Warning', 'Critical']);
     setApplication('All Applications');
     setStartDate('');
     setEndDate('');
@@ -99,20 +89,6 @@ function LogsPage() {
         </section>
 
         <section>
-          <h3>Status</h3>
-          {['Success', 'Warning', 'Critical'].map((status) => (
-            <label key={status}>
-              <input
-                type="checkbox"
-                checked={statuses.includes(status)}
-                onChange={() => toggleStatus(status)}
-              />
-              {status}
-            </label>
-          ))}
-        </section>
-
-        <section>
           <h3>Application</h3>
           <select value={application} onChange={(event) => setApplication(event.target.value)}>
             <option>All Applications</option>
@@ -142,14 +118,6 @@ function LogsPage() {
             </p>
           </div>
           <div className="logs-actions">
-            <div>
-              <button className={view === 'Table' ? 'active' : ''} onClick={() => setView('Table')}>
-                ☷ Table
-              </button>
-              <button className={view === 'Timeline' ? 'active' : ''} onClick={() => setView('Timeline')}>
-                ⌁ Timeline
-              </button>
-            </div>
             <button onClick={exportLogs}>⇩ Export Data</button>
           </div>
         </header>
@@ -158,7 +126,7 @@ function LogsPage() {
           <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
             Loading audit log events from database...
           </div>
-        ) : view === 'Table' ? (
+        ) : (
           <section className="logs-table-card">
             <div className="table-scroll">
               <table>
@@ -215,29 +183,6 @@ function LogsPage() {
             <footer>
               <span>Showing {visibleEvents.length} of {events.length} system events</span>
             </footer>
-          </section>
-        ) : (
-          <section className="logs-timeline">
-            {visibleEvents.map((item) => (
-              <article key={item.id}>
-                <i className={`log-status--${item.status.toLowerCase()}`} />
-                <div>
-                  <code>{item.time}</code>
-                  <h3>{item.event}</h3>
-                  <p>
-                    {item.user} · {item.admin} ({item.app})
-                  </p>
-                </div>
-                <b className={`log-status log-status--${item.status.toLowerCase()}`}>
-                  {item.status}
-                </b>
-              </article>
-            ))}
-            {visibleEvents.length === 0 && (
-              <div style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>
-                No events match these filters.
-              </div>
-            )}
           </section>
         )}
       </section>
