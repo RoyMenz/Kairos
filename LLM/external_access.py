@@ -32,6 +32,18 @@ ROLE_MAPPING = {
 
 LOGGER = logging.getLogger(__name__)
 
+# Keep source-code, repository, and issue-tracker access limited to roles that
+# normally require engineering tooling. Override with a comma-separated value in
+# TECHNICAL_PLATFORM_ROLES when the organization has different role names.
+DEFAULT_TECHNICAL_PLATFORM_ROLES = frozenset({
+    "backend", "frontend", "backend-developer", "frontend-developer",
+    "database-developer", "data-engineer", "qa-engineer", "devops-engineer",
+    "cloud-architect", "security-engineer", "machine-learning-engineer",
+})
+DEFAULT_JIRA_COLLABORATION_ROLES = frozenset({
+    "project-manager", "project-lead", "product-manager", "scrum-master",
+})
+
 
 def role_resources(role: str) -> dict[str, str]:
     """Return fixed resources for known roles or safely derived resources for new roles."""
@@ -45,6 +57,27 @@ def role_resources(role: str) -> dict[str, str]:
         "jira_project": role.replace("-", " ").title(),
         "jira_key": project_key,
     }
+
+
+def is_technical_platform_role(role: str) -> bool:
+    configured = os.environ.get("TECHNICAL_PLATFORM_ROLES", "")
+    allowed_roles = (
+        {item.strip().lower() for item in configured.split(",") if item.strip()}
+        if configured
+        else DEFAULT_TECHNICAL_PLATFORM_ROLES
+    )
+    return role.strip().lower() in allowed_roles
+
+
+def is_jira_collaboration_role(role: str) -> bool:
+    """Return whether a nontechnical role needs Jira collaboration access."""
+    configured = os.environ.get("JIRA_COLLABORATION_ROLES", "")
+    allowed_roles = (
+        {item.strip().lower() for item in configured.split(",") if item.strip()}
+        if configured
+        else DEFAULT_JIRA_COLLABORATION_ROLES
+    )
+    return role.strip().lower() in allowed_roles
 
 
 def _jira_headers() -> tuple[dict[str, str], HTTPBasicAuth]:
@@ -226,7 +259,17 @@ def assign_user_to_kairos_project(work_email: str, employee_role: str = "") -> b
     return True
 
 
-def start_external_onboarding(work_email: str, role: str) -> None:
-    invite_to_github(work_email, role)
-    invite_to_jira(work_email, role)
-    assign_user_to_kairos_project(work_email, role)
+def start_external_onboarding(work_email: str, role: str) -> tuple[bool, bool]:
+    """Provision GitHub for technical roles and Jira for technical/collaboration roles."""
+    technical = is_technical_platform_role(role)
+    jira_required = technical or is_jira_collaboration_role(role)
+    if technical:
+        invite_to_github(work_email, role)
+    else:
+        LOGGER.info("%s: skipping GitHub for nontechnical role %s.", work_email, role)
+    if jira_required:
+        invite_to_jira(work_email, role)
+        assign_user_to_kairos_project(work_email, role)
+    else:
+        LOGGER.info("%s: skipping Jira for role %s.", work_email, role)
+    return technical, jira_required

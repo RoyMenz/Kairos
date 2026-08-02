@@ -51,4 +51,8 @@ after they join.
 
 The LLM maps a designation to an approved role (`backend` or `frontend`) for
 later access assignment. The generated work address uses
-`firstname@nigmafest.in`. The service never logs the temporary password.
+`firstnamelastname@nigmafest.in`. The service never logs the temporary password.
+GitHub and Jira are provisioned only for technical roles; customize the allowed
+role keys with the optional `TECHNICAL_PLATFORM_ROLES` setting.
+Project Manager roles receive Slack and Jira, but not GitHub; customize these
+nontechnical Jira roles with `JIRA_COLLABORATION_ROLES`.

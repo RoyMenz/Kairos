@@ -102,18 +102,48 @@ def release_password_changed_onboarding() -> None:
             continue
         if not record.get("invite_sent"):
             start_onboarding(email, record["designation"], record["role"])
-        start_external_onboarding(email, record["role"])
+        github_sent, jira_sent = start_external_onboarding(email, record["role"])
         pending = load_pending()
         pending[email]["external_invites_sent"] = True
         pending[email]["awaiting_password_change"] = False
         save_pending(pending)
-        LOGGER.info("%s: password changed; Slack, GitHub, and Jira invitations sent.", email)
+        if github_sent and jira_sent:
+            LOGGER.info("%s: password changed; Slack, GitHub, and Jira invitations sent.", email)
+        elif jira_sent:
+            LOGGER.info("%s: password changed; Slack and Jira invitations sent; GitHub not required.", email)
+        else:
+            LOGGER.info("%s: password changed; Slack onboarding sent; GitHub and Jira not required.", email)
+
+
+def reconcile_pending_slack_memberships() -> None:
+    """Finish channel assignments when a Slack join event was missed while offline."""
+    pending = load_pending()
+    candidates = [
+        (email, record)
+        for email, record in pending.items()
+        if record.get("invite_sent") and record.get("channel")
+    ]
+    if not candidates:
+        return
+    require_settings("SLACK_BOT_TOKEN")
+    slack = WebClient(token=os.environ["SLACK_BOT_TOKEN"])
+    for email, record in candidates:
+        user_id = find_user_id(slack, email)
+        if not user_id:
+            continue
+        result = add_user_to_channel(slack, user_id, record["channel"])
+        LOGGER.info("%s: %s", email, result)
+        pending = load_pending()
+        if email in pending:
+            del pending[email]
+            save_pending(pending)
 
 
 def run_activation_watcher() -> None:
     while True:
         try:
             release_password_changed_onboarding()
+            reconcile_pending_slack_memberships()
         except Exception as error:
             LOGGER.exception("Password-change watcher error: %s", error)
         time.sleep(60)

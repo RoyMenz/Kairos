@@ -48,7 +48,7 @@ def main():
             output = buf.getvalue().strip()
             from workspace_service import make_local_part
             domain = os.environ.get("ZOHO_WORKPLACE_DOMAIN", "nigmafest.in").lower()
-            work_email = f"{make_local_part(first_name)}@{domain}"
+            work_email = f"{make_local_part(first_name, last_name)}@{domain}"
             print(json.dumps({"success": True, "work_email": work_email, "output": output}))
 
 

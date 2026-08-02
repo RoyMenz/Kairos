@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from google import genai
@@ -6,6 +7,26 @@ from google.genai import types
 
 from config import require_settings
 from slack_service import validate_channel_name
+
+
+LOGGER = logging.getLogger(__name__)
+
+
+def _log_token_usage(operation: str, response) -> None:
+    """Record Gemini usage metadata when it is supplied by the API."""
+    usage = getattr(response, "usage_metadata", None)
+    if usage is None:
+        LOGGER.warning("Gemini did not return token usage for %s.", operation)
+        return
+    LOGGER.info(
+        "Gemini token usage [%s]: prompt=%s, output=%s, total=%s, cached=%s, thoughts=%s",
+        operation,
+        getattr(usage, "prompt_token_count", None),
+        getattr(usage, "candidates_token_count", None),
+        getattr(usage, "total_token_count", None),
+        getattr(usage, "cached_content_token_count", None),
+        getattr(usage, "thoughts_token_count", None),
+    )
 
 
 def choose_workspace_role(designation: str) -> str:
@@ -24,6 +45,7 @@ Use lowercase letters, digits, and hyphens only. Do not return unknown.
         contents=prompt,
         config=types.GenerateContentConfig(temperature=0.0, response_mime_type="application/json"),
     )
+    _log_token_usage("choose_workspace_role", response)
     try:
         role = json.loads(response.text)["role"]
     except (json.JSONDecodeError, KeyError, TypeError) as error:
@@ -51,6 +73,7 @@ The name may contain only lowercase letters, digits, hyphens, and underscores.
         contents=prompt,
         config=types.GenerateContentConfig(temperature=0.0, response_mime_type="application/json"),
     )
+    _log_token_usage("choose_channel", response)
     try:
         return validate_channel_name(json.loads(response.text)["channel_name"])
     except (json.JSONDecodeError, KeyError, TypeError) as error:

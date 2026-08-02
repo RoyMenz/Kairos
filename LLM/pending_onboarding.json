@@ -158,5 +158,15 @@
     "created_at": "2026-08-01T21:46:18.348703+00:00",
     "external_invites_sent": true,
     "awaiting_password_change": false
+  },
+  "ananya@nigmafest.in": {
+    "email": "ananya@nigmafest.in",
+    "designation": "HR Manager",
+    "role": "hr-manager",
+    "channel": "hr",
+    "invite_sent": true,
+    "created_at": "2026-08-01T23:45:47.394429+00:00",
+    "external_invites_sent": true,
+    "awaiting_password_change": false
   }
 }

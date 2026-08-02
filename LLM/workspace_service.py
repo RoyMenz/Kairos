@@ -100,12 +100,12 @@ def _request(method: str, path: str, **kwargs) -> requests.Response:
     return response
 
 
-def make_local_part(first_name: str) -> str:
-    """Return the approved firstname local part for a work address."""
-    first = re.sub(r"[^a-z0-9]", "", first_name.lower())
-    if not first or not LOCAL_PART.fullmatch(first):
-        raise ValueError("First name must produce a valid work-email address.")
-    return first
+def make_local_part(first_name: str, last_name: str = "") -> str:
+    """Return a normalized full-name local part, for example rishithshetty."""
+    local_part = re.sub(r"[^a-z0-9]", "", f"{first_name}{last_name}".lower())
+    if not local_part or not LOCAL_PART.fullmatch(local_part):
+        raise ValueError("The employee name must produce a valid work-email address.")
+    return local_part
 
 
 def generate_temporary_password() -> str:
@@ -142,7 +142,7 @@ def _user_exists(organization_id: str, email: str) -> bool:
 def create_work_account(first_name: str, last_name: str, role: str) -> tuple[str, str]:
     """Create a Zoho Workplace account requiring a password change at first login."""
     require_settings("ZOHO_ORGANIZATION_ID", "ZOHO_WORKPLACE_DOMAIN")
-    local_part = make_local_part(first_name)
+    local_part = make_local_part(first_name, last_name)
     work_email = f"{local_part}@{os.environ['ZOHO_WORKPLACE_DOMAIN'].lower()}"
     organization_id = os.environ["ZOHO_ORGANIZATION_ID"]
     if _user_exists(organization_id, work_email):
