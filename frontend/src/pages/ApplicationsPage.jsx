@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const applicationLogos = {
-  zoho: 'https://cdn.simpleicons.org/zoho/E42527',
-  slack: 'https://cdn.simpleicons.org/slack/4A154B',
+  zoho: 'https://www.zoho.com/sites/zweb/images/commonroot/zoho-logo-web.svg',
+  slack: 'https://a.slack-edge.com/80588/marketing/img/meta/slack_hash_256.png',
   github: 'https://cdn.simpleicons.org/github/181717',
   jira: 'https://cdn.simpleicons.org/jira/0052CC',
 };
@@ -11,6 +11,11 @@ function getApplicationLogo(name = '') {
   const normalizedName = name.toLowerCase();
   const logoName = Object.keys(applicationLogos).find((key) => normalizedName.includes(key));
   return logoName ? applicationLogos[logoName] : null;
+}
+
+function getApplicationLogoName(name = '') {
+  const normalizedName = name.toLowerCase();
+  return Object.keys(applicationLogos).find((key) => normalizedName.includes(key)) || '';
 }
 
 function ApplicationsPage() {
@@ -75,7 +80,10 @@ function ApplicationsPage() {
           {visibleApps.map((app) => (
             <article className="application-card" key={app.name}>
               <header>
-                <div className="app-logo" style={{ color: app.color, fontWeight: 'bold' }}>
+                <div
+                  className={`app-logo app-logo--${getApplicationLogoName(app.name)}`}
+                  style={{ color: app.color, fontWeight: 'bold' }}
+                >
                   {getApplicationLogo(app.name) ? (
                     <img
                       src={getApplicationLogo(app.name)}
