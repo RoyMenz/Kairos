@@ -9,7 +9,6 @@ function AddEmployeePage() {
     department: 'Engineering',
   });
   const [createdEmployee, setCreatedEmployee] = useState(null);
-  const [aiWorkflow, setAiWorkflow] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -50,8 +49,7 @@ function AddEmployeePage() {
         throw new Error(data.error || 'Failed to add employee record');
       }
 
-      setCreatedEmployee(data.employee);
-      setAiWorkflow(data.workflow);
+      setCreatedEmployee(data.employee || null);
       setShowSuccess(true);
     } catch (err) {
       setErrorMessage(err.message || 'Error creating employee & generating AI workflow');
@@ -193,76 +191,39 @@ function AddEmployeePage() {
         <div className="success-overlay" role="dialog" aria-modal="true">
           <div className="success-dialog" style={{ maxWidth: '520px', width: '92%' }}>
             <div className="success-check">✓</div>
-            <h2 style={{ marginBottom: '4px' }}>AI Workflow Generated &amp; Profile Saved</h2>
-            <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#64748b' }}>
-              Gemini LLM model processed identity provisioning for <strong>{createdEmployee?.name || employee.name}</strong>.
-            </p>
+            <h2>AI Workflow Generated Successfully</h2>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '10px',
-                marginBottom: '16px',
-                textAlign: 'left',
-              }}
-            >
-              <div
-                style={{
-                  padding: '12px',
-                  backgroundColor: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  borderRadius: '8px',
-                }}
-              >
-                <span style={{ fontSize: '11px', color: '#166534', fontWeight: '700', textTransform: 'uppercase' }}>
-                  Assigned Employee ID
-                </span>
-                <div style={{ fontSize: '20px', fontWeight: '800', color: '#15803d', marginTop: '2px', fontFamily: 'monospace' }}>
-                  {createdEmployee?.employee_id || 'KS001'}
-                </div>
+            <div className="success-summary">
+              <div>
+                <span>Assigned Employee ID</span>
+                <strong>{createdEmployee?.employee_id || 'Pending'}</strong>
               </div>
-
-              <div
-                style={{
-                  padding: '12px',
-                  backgroundColor: '#eff6ff',
-                  border: '1px solid #bfdbfe',
-                  borderRadius: '8px',
-                }}
-              >
-                <span style={{ fontSize: '11px', color: '#1e40af', fontWeight: '700', textTransform: 'uppercase' }}>
-                  Gemini Role Class
-                </span>
-                <div style={{ fontSize: '18px', fontWeight: '700', color: '#1d4ed8', marginTop: '2px' }}>
-                  {aiWorkflow?.classifiedRole || createdEmployee?.classified_role || 'backend'}
-                </div>
+              <div>
+                <span>Role</span>
+                <strong>{createdEmployee?.role || employee.role}</strong>
               </div>
             </div>
 
-            <div
-              style={{
-                padding: '12px',
-                backgroundColor: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                textAlign: 'left',
-                marginBottom: '18px',
-                fontSize: '13px',
-              }}
-            >
-              <div style={{ fontWeight: '700', color: '#334155', marginBottom: '8px' }}>
-                🤖 Automated AI Onboarding Sequence:
+            <dl className="success-employee-details">
+              <div>
+                <dt>Name</dt>
+                <dd>{createdEmployee?.name || employee.name}</dd>
               </div>
-              <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', lineHeight: '1.6' }}>
-                <li>✓ <strong>Database Record</strong> created in Supabase</li>
-                <li>✦ <strong>Gemini LLM</strong> mapped job function to role</li>
-                <li>✦ <strong>Slack Channel</strong> routed to <code>#{aiWorkflow?.suggestedChannel || createdEmployee?.slack_channel || 'backend-developers'}</code></li>
-                <li>✉ <strong>New Work Account</strong> (<code>{createdEmployee?.email}</code>) created &amp; activation link sent</li>
-              </ul>
-            </div>
+              <div>
+                <dt>Personal Email</dt>
+                <dd>{employee.email}</dd>
+              </div>
+              <div>
+                <dt>Work Email</dt>
+                <dd>{createdEmployee?.email || 'Pending account creation'}</dd>
+              </div>
+              <div>
+                <dt>Date of Joining</dt>
+                <dd>{createdEmployee?.joining_date || createdEmployee?.joiningDate || employee.joiningDate}</dd>
+              </div>
+            </dl>
 
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+            <div className="success-actions">
               <button
                 className="secondary-button"
                 onClick={() => {
