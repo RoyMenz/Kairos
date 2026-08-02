@@ -321,18 +321,19 @@ function EmployeesPage() {
       {/* Offboarding Confirmation Modal */}
       {offboardConfirm && (
         <div className="profile-modal-backdrop" role="presentation" onMouseDown={() => setOffboardConfirm(null)}>
-          <section className="profile-modal" style={{ maxWidth: '480px' }} onMouseDown={(e) => e.stopPropagation()}>
-            <header>
-              <div>
-                <span className="offboard-title">⚠️ Offboarding Confirmation</span>
+          <section className="profile-modal offboard-dialog" role="dialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}>
+            <header className="offboard-dialog-header">
+              <span className="offboard-dialog-icon" aria-hidden="true">!</span>
+              <div className="offboard-dialog-copy">
+                <span className="offboard-title">Offboarding Confirmation</span>
                 <h2>Offboard {offboardConfirm.name}?</h2>
               </div>
-              <button className="profile-close" onClick={() => setOffboardConfirm(null)}>×</button>
+              <button className="profile-close" aria-label="Close dialog" onClick={() => setOffboardConfirm(null)}>×</button>
             </header>
 
             <div className="offboard-confirm-content">
               <p>Executing offboarding will perform the following actions:</p>
-              <ul style={{ margin: '8px 0 16px 20px', padding: 0 }}>
+              <ul>
                 <li>Disable Zoho Workplace account and mailbox access.</li>
                 <li>Remove user from GitHub Organization / cancel active invitation.</li>
                 <li>Revoke access in Jira Software.</li>
@@ -343,13 +344,13 @@ function EmployeesPage() {
               </div>
             </div>
 
-            <footer style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <footer className="offboard-dialog-actions">
               <button className="offboard-cancel" onClick={() => setOffboardConfirm(null)}>
                 Cancel
               </button>
               <button
+                className="offboard-confirm"
                 disabled={actionLoading}
-                style={{ background: '#dc2626', color: '#ffffff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
                 onClick={() => executeOffboarding(offboardConfirm)}
               >
                 {actionLoading ? 'Offboarding...' : 'Confirm Offboarding'}
