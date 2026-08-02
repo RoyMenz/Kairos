@@ -1,5 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 
+const applicationLogos = {
+  zoho: 'https://cdn.simpleicons.org/zoho/E42527',
+  slack: 'https://cdn.simpleicons.org/slack/4A154B',
+  github: 'https://cdn.simpleicons.org/github/181717',
+  jira: 'https://cdn.simpleicons.org/jira/0052CC',
+};
+
+function getApplicationLogo(name = '') {
+  const normalizedName = name.toLowerCase();
+  const logoName = Object.keys(applicationLogos).find((key) => normalizedName.includes(key));
+  return logoName ? applicationLogos[logoName] : null;
+}
+
 function ApplicationsPage() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +76,19 @@ function ApplicationsPage() {
             <article className="application-card" key={app.name}>
               <header>
                 <div className="app-logo" style={{ color: app.color, fontWeight: 'bold' }}>
-                  {app.mark}
+                  {getApplicationLogo(app.name) ? (
+                    <img
+                      src={getApplicationLogo(app.name)}
+                      alt={`${app.name} logo`}
+                      onError={(event) => {
+                        event.currentTarget.style.display = 'none';
+                        event.currentTarget.nextElementSibling.style.display = 'block';
+                      }}
+                    />
+                  ) : null}
+                  <span style={{ display: getApplicationLogo(app.name) ? 'none' : 'block' }}>
+                    {app.mark}
+                  </span>
                 </div>
                 <span className={app.status === 'Connected' ? 'connected' : 'reauth'}>
                   <i />
@@ -79,9 +104,7 @@ function ApplicationsPage() {
                 </div>
                 {app.status === 'Needs Re-auth' ? (
                   <button>Fix Connection</button>
-                ) : (
-                  <span className="app-arrow">›</span>
-                )}
+                ) : null}
               </footer>
             </article>
           ))}
