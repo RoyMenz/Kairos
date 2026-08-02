@@ -9,10 +9,11 @@ function AddEmployeePage() {
     joiningDate: '',
     department: 'Engineering',
   });
-  const [createdEmployee, setCreatedEmployee] = useState(null);
   const [selectedRole, setSelectedRole] = useState('');
+  const [suggestedChannel, setSuggestedChannel] = useState('general');
   const [accessSuggestions, setAccessSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [finishing, setFinishing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -30,16 +31,22 @@ function AddEmployeePage() {
     setErrorMessage('');
 
     try {
-      const data = await apiFetch('/api/employees', {
-        method: 'POST',
-        body: JSON.stringify({ ...employee, generateWorkflow: true }),
-      });
+      const [classification, channelChoice, accessSuggestion] = await Promise.all([
+        apiFetch('/api/llm/classify-role', {
+          method: 'POST', body: JSON.stringify({ designation: employee.role }),
+        }),
+        apiFetch('/api/llm/choose-channel', {
+          method: 'POST', body: JSON.stringify({ designation: employee.role }),
+        }),
+        apiFetch('/api/llm/suggest-access', {
+          method: 'POST', body: JSON.stringify({ designation: employee.role }),
+        }),
+      ]);
 
-      setCreatedEmployee(data.employee || null);
-      const workflow = data.workflow || {};
-      const role = workflow.classifiedRole || data.employee?.classified_role || data.employee?.role || employee.role;
+      const role = classification.role || employee.role;
       setSelectedRole(role);
-      const suggestedAccess = workflow.access || {};
+      setSuggestedChannel(channelChoice.channel || 'general');
+      const suggestedAccess = accessSuggestion.access || {};
       setAccessSuggestions([
         { id: 'jira', label: 'Jira', value: suggestedAccess.jira || 'no-access', editing: false },
         { id: 'slack', label: 'Slack', value: suggestedAccess.slack || 'member', editing: false },
@@ -47,7 +54,7 @@ function AddEmployeePage() {
       ].filter((item) => item.value !== 'no-access'));
       setShowSuccess(true);
     } catch (err) {
-      setErrorMessage(err.message || 'Error creating employee & generating AI workflow');
+      setErrorMessage(err.message || 'Error generating AI workflow');
     } finally {
       setLoading(false);
     }
@@ -80,14 +87,31 @@ function AddEmployeePage() {
     setAccessSuggestions((current) => current.filter((item) => item.id !== id));
   }
 
-  function finishAccessReview() {
-    const review = {
-      employeeId: createdEmployee?.employee_id,
-      role: selectedRole,
-      access: accessSuggestions.map(({ id, label, value }) => ({ id, label, value })),
-    };
-    localStorage.setItem(`peopleflow-access-${createdEmployee?.employee_id || employee.email}`, JSON.stringify(review));
-    window.location.href = '/employees';
+  async function finishAccessReview() {
+    setFinishing(true);
+    setErrorMessage('');
+    try {
+      const access = Object.fromEntries(accessSuggestions.map(({ id, value }) => [id, value]));
+      const data = await apiFetch('/api/employees', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...employee,
+          generateWorkflow: true,
+          workflowPreview: { classifiedRole: selectedRole, suggestedChannel, access },
+        }),
+      });
+      const review = {
+        employeeId: data.employee?.employee_id,
+        role: selectedRole,
+        access: accessSuggestions.map(({ id, label, value }) => ({ id, label, value })),
+      };
+      localStorage.setItem(`peopleflow-access-${data.employee?.employee_id || employee.email}`, JSON.stringify(review));
+      window.location.replace('/employees');
+    } catch (error) {
+      setErrorMessage(error.message || 'Unable to save the employee');
+    } finally {
+      setFinishing(false);
+    }
   }
 
   return (
@@ -253,7 +277,10 @@ function AddEmployeePage() {
             </div>
 
             <div className="access-review-footer">
-              <button className="primary-button" onClick={finishAccessReview}>Finish</button>
+              {errorMessage && <p className="access-review-empty">{errorMessage}</p>}
+              <button className="primary-button" onClick={finishAccessReview} disabled={finishing}>
+                {finishing ? 'Saving Employee...' : 'Finish'}
+              </button>
             </div>
           </div>
         </div>

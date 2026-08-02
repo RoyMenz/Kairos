@@ -74,13 +74,17 @@ def provision_workspace_account(
     personal_email: str, first_name: str, last_name: str, designation: str
 ) -> None:
     role = choose_workspace_role(designation)
-    work_email, temporary_password = create_work_account(first_name, last_name, role)
+    work_email, temporary_password, zuid, account_id = create_work_account(
+        first_name, last_name, role
+    )
     send_work_account_activation(personal_email, work_email, temporary_password)
     pending = load_pending()
     pending[work_email.lower()] = {
         "email": work_email,
         "designation": designation,
         "role": role,
+        "zoho_zuid": zuid,
+        "zoho_account_id": account_id,
         "awaiting_password_change": True,
         "invite_sent": False,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -102,7 +106,11 @@ def release_password_changed_onboarding() -> None:
             continue
         if not record.get("invite_sent"):
             start_onboarding(email, record["designation"], record["role"])
-        github_sent, jira_sent = start_external_onboarding(email, record["role"])
+        _, _, github_invitation_id, jira_account_id = start_external_onboarding(
+            email, record["role"]
+        )
+        github_sent = bool(github_invitation_id)
+        jira_sent = bool(jira_account_id)
         pending = load_pending()
         pending[email]["external_invites_sent"] = True
         pending[email]["awaiting_password_change"] = False

@@ -94,7 +94,7 @@ app.get('/api/employees', async (request, response, next) => {
 
 app.post('/api/employees', async (request, response, next) => {
   try {
-    const { name, email, role, joiningDate, department, generateWorkflow = true } = request.body || {};
+    const { name, email, role, joiningDate, department, generateWorkflow = true, workflowPreview = null } = request.body || {};
     if (!name || !email || !role) {
       return response.status(400).json({ error: 'Name, work email, and role are required' });
     }
@@ -118,26 +118,34 @@ app.post('/api/employees', async (request, response, next) => {
         const lastName = nameParts.slice(1).join(' ') || 'User';
 
         // Call Gemini LLM to classify employee designation/role
-        let classification = { role: 'backend' };
-        try {
-          classification = await llmService.classifyRole(role);
-        } catch (clsErr) {
-          console.warn('Gemini classification notice:', clsErr.message);
+        let classification = { role: workflowPreview?.classifiedRole || '' };
+        if (!classification.role) {
+          try {
+            classification = await llmService.classifyRole(role);
+          } catch (clsErr) {
+            console.warn('Gemini classification notice:', clsErr.message);
+            classification = { role: 'backend' };
+          }
         }
 
         // Call Gemini LLM to map optimal Slack channel
-        let channelChoice = { channel: 'general' };
-        try {
-          channelChoice = await llmService.chooseChannel(role);
-        } catch (chnErr) {
-          console.warn('Gemini channel choice notice:', chnErr.message);
+        let channelChoice = { channel: workflowPreview?.suggestedChannel || '' };
+        if (!channelChoice.channel) {
+          try {
+            channelChoice = await llmService.chooseChannel(role);
+          } catch (chnErr) {
+            console.warn('Gemini channel choice notice:', chnErr.message);
+            channelChoice = { channel: 'general' };
+          }
         }
 
-        let accessSuggestion = null;
-        try {
-          accessSuggestion = await llmService.suggestAccess(role);
-        } catch (accessErr) {
-          console.warn('Gemini access suggestion notice:', accessErr.message);
+        let accessSuggestion = workflowPreview?.access ? { access: workflowPreview.access } : null;
+        if (!accessSuggestion) {
+          try {
+            accessSuggestion = await llmService.suggestAccess(role);
+          } catch (accessErr) {
+            console.warn('Gemini access suggestion notice:', accessErr.message);
+          }
         }
 
         // Trigger Google Workspace account provisioning & activation email
